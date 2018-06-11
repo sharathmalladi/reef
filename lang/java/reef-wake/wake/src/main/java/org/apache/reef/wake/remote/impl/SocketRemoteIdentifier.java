@@ -47,7 +47,6 @@ public class SocketRemoteIdentifier implements RemoteIdentifier {
    */
   public SocketRemoteIdentifier(final String str) {
     int index = str.indexOf("0:0:0:0:0:0:0:0:");
-
     if (index >= 0) {
       final String host = str.substring(0, 15);
       final int port = Integer.parseInt(str.substring(index + 16));

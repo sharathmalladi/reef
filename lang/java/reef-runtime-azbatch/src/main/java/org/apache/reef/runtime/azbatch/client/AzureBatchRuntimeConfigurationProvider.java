@@ -18,19 +18,29 @@
  */
 package org.apache.reef.runtime.azbatch.client;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.reef.annotations.audience.Public;
 import org.apache.reef.runtime.azbatch.parameters.*;
+import org.apache.reef.runtime.common.REEFEnvironment;
 import org.apache.reef.tang.Configuration;
+import org.apache.reef.tang.Configurations;
+import org.apache.reef.tang.Tang;
 import org.apache.reef.tang.annotations.Parameter;
+import org.apache.reef.tang.exceptions.InjectionException;
+import org.apache.reef.util.logging.Config;
+import org.apache.reef.wake.remote.ports.ListTcpPortProvider;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
 
 import javax.inject.Inject;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class that provides the runtime configuration for Azure Batch.
  */
 @Public
 public final class AzureBatchRuntimeConfigurationProvider {
-
   private final String azureBatchAccountName;
   private final String azureBatchAccountKey;
   private final String azureBatchAccountUri;
@@ -64,15 +74,26 @@ public final class AzureBatchRuntimeConfigurationProvider {
   }
 
   public Configuration getAzureBatchRuntimeConfiguration() {
-    return AzureBatchRuntimeConfigurationCreator
-        .getOrCreateAzureBatchRuntimeConfiguration(this.isWindows)
-        .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_NAME, this.azureBatchAccountName)
-        .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_KEY, this.azureBatchAccountKey)
-        .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_URI, this.azureBatchAccountUri)
-        .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_POOL_ID, this.azureBatchPoolId)
-        .set(AzureBatchRuntimeConfiguration.AZURE_STORAGE_ACCOUNT_NAME, this.azureStorageAccountName)
-        .set(AzureBatchRuntimeConfiguration.AZURE_STORAGE_ACCOUNT_KEY, this.azureStorageAccountKey)
-        .set(AzureBatchRuntimeConfiguration.AZURE_STORAGE_CONTAINER_NAME, this.azureStorageContainerName)
+    String[] ports = {"1000", "1001", "1002", "1003", "1004", "1005", "1006", "1007", "1008", "1009"};
+
+    final String availablePortsList = StringUtils.join(ports, ",");
+
+    Configuration portConfiguration = Tang.Factory.getTang().newConfigurationBuilder()
+        .bindNamedParameter(TcpPortList.class, availablePortsList)
+        .bindImplementation(TcpPortProvider.class, ListTcpPortProvider.class)
         .build();
+
+    return Configurations.merge(
+        portConfiguration,
+        AzureBatchRuntimeConfigurationCreator
+            .getOrCreateAzureBatchRuntimeConfiguration(this.isWindows)
+            .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_NAME, this.azureBatchAccountName)
+            .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_KEY, this.azureBatchAccountKey)
+            .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_URI, this.azureBatchAccountUri)
+            .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_POOL_ID, this.azureBatchPoolId)
+            .set(AzureBatchRuntimeConfiguration.AZURE_STORAGE_ACCOUNT_NAME, this.azureStorageAccountName)
+            .set(AzureBatchRuntimeConfiguration.AZURE_STORAGE_ACCOUNT_KEY, this.azureStorageAccountKey)
+            .set(AzureBatchRuntimeConfiguration.AZURE_STORAGE_CONTAINER_NAME, this.azureStorageContainerName)
+            .build());
   }
 }

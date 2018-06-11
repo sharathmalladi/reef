@@ -31,17 +31,23 @@ import org.apache.reef.runtime.common.evaluator.parameters.DriverRemoteIdentifie
 import org.apache.reef.runtime.common.files.REEFFileNames;
 import org.apache.reef.runtime.common.utils.RemoteManager;
 import org.apache.reef.tang.Configuration;
+import org.apache.reef.tang.Tang;
 import org.apache.reef.tang.annotations.Parameter;
 import org.apache.reef.tang.exceptions.BindException;
+import org.apache.reef.tang.exceptions.InjectionException;
 import org.apache.reef.tang.formats.ConfigurationSerializer;
 import org.apache.reef.wake.EventHandler;
+import org.apache.reef.wake.remote.RemoteConfiguration;
 import org.apache.reef.wake.remote.RemoteMessage;
-
+import org.apache.reef.wake.remote.address.ContainerBasedLocalAddressProvider;
+import org.apache.reef.wake.remote.address.LocalAddressProvider;
+import org.apache.reef.wake.remote.impl.SocketRemoteIdentifier;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -77,6 +83,7 @@ public final class EvaluatorShim
 
   private final String driverRemoteId;
   private final String containerId;
+  private final Integer listenPort;
 
   private final EventHandler<EvaluatorShimProtocol.EvaluatorShimStatusProto> evaluatorShimStatusChannel;
   private final AutoCloseable evaluatorShimCommandChannel;
@@ -92,12 +99,16 @@ public final class EvaluatorShim
                 final ConfigurationSerializer configurationSerializer,
                 final RemoteManager remoteManager,
                 @Parameter(DriverRemoteIdentifier.class) final String driverRemoteId,
-                @Parameter(ContainerIdentifier.class) final String containerId) {
+                @Parameter(RemoteConfiguration.Port.class) final Integer listenPort,
+                @Parameter(ContainerIdentifier.class) final String containerId) throws InjectionException {
     this.reefFileNames = reefFileNames;
     this.azureBatchFileNames = azureBatchFileNames;
     this.configurationSerializer = configurationSerializer;
 
+    this.listenPort = listenPort;
+    LOG.log(Level.INFO, "listenPort is " + listenPort);
     this.driverRemoteId = driverRemoteId;
+    LOG.log(Level.INFO, "driverRemoteId is " + this.driverRemoteId);
     this.containerId = containerId;
 
     this.remoteManager = remoteManager;
@@ -165,22 +176,23 @@ public final class EvaluatorShim
 
   private void onStart() {
     LOG.log(Level.FINEST, "Entering EvaluatorShim.onStart().");
-
+    LOG.log(Level.INFO, "this.remoteManager.getMyIdentifier() is " + this.remoteManager.getMyIdentifier());
+    LOG.log(Level.INFO, "this.getHostAsRemoteId() is " + this.getHostAsRemoteId());
     LOG.log(Level.INFO, "Reporting back to the driver with Shim Status = {0}",
         EvaluatorShimProtocol.EvaluatorShimStatus.ONLINE);
     this.evaluatorShimStatusChannel.onNext(
         EvaluatorShimProtocol.EvaluatorShimStatusProto
             .newBuilder()
-            .setRemoteIdentifier(this.remoteManager.getMyIdentifier())
+            .setRemoteIdentifier(getHostAsRemoteId())
             .setContainerId(this.containerId)
             .setStatus(EvaluatorShimProtocol.EvaluatorShimStatus.ONLINE)
             .build());
 
-    LOG.log(Level.FINEST, "Exiting EvaluatorShim.onStart().");
+    LOG.log(Level.INFO, "Exiting EvaluatorShim.onStart().");
   }
 
   private void onStop() {
-    LOG.log(Level.FINEST, "Entering EvaluatorShim.onStop().");
+    LOG.log(Level.INFO, "Entering EvaluatorShim.onStop().");
 
     try {
       LOG.log(Level.INFO, "Closing EvaluatorShim Control channel.");
@@ -298,6 +310,16 @@ public final class EvaluatorShim
           }
         }
       }
+    }
+  }
+
+  public String getHostAsRemoteId() {
+    try {
+      final LocalAddressProvider addressProvider = Tang.Factory.getTang().newInjector().getInstance(ContainerBasedLocalAddressProvider.class);
+      InetSocketAddress socketAddress = new InetSocketAddress(addressProvider.getLocalAddress(), this.listenPort);
+      return new SocketRemoteIdentifier(socketAddress).toString();
+    } catch (InjectionException ex) {
+      throw new RuntimeException("Failure to get host as Remote Id", ex);
     }
   }
 }

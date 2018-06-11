@@ -103,7 +103,7 @@ public final class DefaultRemoteManagerImplementation implements RemoteManager {
 
     final int counter = COUNTER.incrementAndGet();
 
-    LOG.log(Level.FINEST,
+    LOG.log(Level.INFO,
         "RemoteManager {0} instantiated id {1} counter {2} listening on {3} Binding address provided by {4}",
         new Object[] {this.name, this.myIdentifier, counter, this.transport.getLocalAddress(), localAddressProvider});
   }

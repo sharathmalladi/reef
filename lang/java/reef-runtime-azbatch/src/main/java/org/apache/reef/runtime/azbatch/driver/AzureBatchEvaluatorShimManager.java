@@ -43,9 +43,12 @@ import org.apache.reef.runtime.common.driver.resourcemanager.RuntimeStatusEventI
 import org.apache.reef.runtime.common.files.*;
 import org.apache.reef.runtime.common.utils.RemoteManager;
 import org.apache.reef.tang.Configuration;
+import org.apache.reef.tang.exceptions.InjectionException;
 import org.apache.reef.tang.formats.ConfigurationSerializer;
+import org.apache.reef.tang.types.NamedParameterNode;
 import org.apache.reef.util.Optional;
 import org.apache.reef.wake.EventHandler;
+import org.apache.reef.wake.remote.RemoteConfiguration;
 import org.apache.reef.wake.remote.RemoteMessage;
 import org.apache.reef.wake.remote.impl.SocketRemoteIdentifier;
 
@@ -156,11 +159,12 @@ public final class AzureBatchEvaluatorShimManager
                                   final String containerId,
                                   final URI jarFileUri) {
     try {
-      createAzureBatchTask(containerId, jarFileUri);
+      LOG.log(Level.INFO, "SHARATH In shim manager onResourceRequested: " + this.remoteManager.getMyIdentifier());
+      createAzureBatchTask(containerId, jarFileUri, this.remoteManager.getMyIdentifier());
       this.outstandingResourceRequests.put(containerId, resourceRequestEvent);
       this.outstandingResourceRequestCount.incrementAndGet();
       this.updateRuntimeStatus();
-    } catch (IOException e) {
+    } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to create Azure Batch task with the following exception: {0}", e);
       throw new RuntimeException(e);
     }
@@ -417,14 +421,21 @@ public final class AzureBatchEvaluatorShimManager
         .setType(type).build();
   }
 
-  private void createAzureBatchTask(final String taskId, final URI jarFileUri) throws IOException {
-    final Configuration shimConfig = this.evaluatorShimConfigurationProvider.getConfiguration(taskId);
+  private void createAzureBatchTask(final String taskId, final URI jarFileUri, final String driverIdentifier) throws IOException, InjectionException {
+    String containerPort = null;
+    final Configuration shimConfig = this.evaluatorShimConfigurationProvider.getConfiguration(taskId, driverIdentifier);
+    for (final NamedParameterNode<?> opt : shimConfig.getNamedParameters()) {
+      if (opt.getFullName() == RemoteConfiguration.Port.class.getName()) {
+        containerPort = shimConfig.getNamedParameter(opt);
+      }
+    }
+
     final File shim = new File(this.reefFileNames.getLocalFolderPath(),
         taskId + '-' + this.azureBatchFileNames.getEvaluatorShimConfigurationName());
     this.configurationSerializer.toFile(shimConfig, shim);
     final URI shimUri = this.uploadFile(shim);
     this.azureBatchHelper.submitTask(this.azureBatchHelper.getAzureBatchJobId(), taskId, jarFileUri,
-        shimUri, getEvaluatorShimLaunchCommand());
+        shimUri, getEvaluatorShimLaunchCommand(), containerPort);
   }
 
   private File writeFileResourcesJarFile(final Set<FileResource> fileResourceSet) throws IOException {
