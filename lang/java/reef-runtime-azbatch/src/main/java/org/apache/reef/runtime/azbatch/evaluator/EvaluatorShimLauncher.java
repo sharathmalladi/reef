@@ -100,7 +100,7 @@ public final class EvaluatorShimLauncher {
    * The starting point of the evaluator shim launcher.
    */
   public static void main(final String[] args) throws Exception {
-    LOG.log(Level.INFO, "Entering EvaluatorShimLauncher.main().");
+    LOG.log(Level.INFO, "Entering EvaluatorShimLauncher.main() with args[0]: " + args[0]);
 
     final Injector injector = Tang.Factory.getTang().newInjector(parseCommandLine(args));
     final EvaluatorShimLauncher launcher = injector.getInstance(EvaluatorShimLauncher.class);

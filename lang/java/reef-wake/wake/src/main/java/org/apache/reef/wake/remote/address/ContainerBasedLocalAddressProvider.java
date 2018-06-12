@@ -79,6 +79,7 @@ public final class ContainerBasedLocalAddressProvider implements LocalAddressPro
       }
     }
     assert null != cached;
+    LOG.log(Level.INFO, "Returning ContainerBasedLocalAddressProvider.getLocalAddress() as " + cached);
     return cached;
   }
 

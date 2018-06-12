@@ -183,7 +183,7 @@ public final class EvaluatorShim
     this.evaluatorShimStatusChannel.onNext(
         EvaluatorShimProtocol.EvaluatorShimStatusProto
             .newBuilder()
-            .setRemoteIdentifier(getHostAsRemoteId())
+            .setRemoteIdentifier(this.remoteManager.getMyIdentifier())
             .setContainerId(this.containerId)
             .setStatus(EvaluatorShimProtocol.EvaluatorShimStatus.ONLINE)
             .build());

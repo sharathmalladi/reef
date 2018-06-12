@@ -46,21 +46,9 @@ public final class EvaluatorShimConfiguration extends ConfigurationModuleBuilder
    */
   public static final RequiredParameter<String> CONTAINER_IDENTIFIER = new RequiredParameter<>();
 
-  /**
-   * @see org.apache.reef.runtime.common.evaluator.parameters.DriverRemoteIdentifier
-   */
-  public static final OptionalParameter<Integer> CONTAINER_PORT = new OptionalParameter<>();
-
-  /**
-   * @see org.apache.reef.runtime.common.evaluator.parameters.DriverRemoteIdentifier
-   */
-  public static final OptionalParameter<String> DRIVER_HOST_ADDRESS = new OptionalParameter<>();
-
   public static final ConfigurationModule CONF = new EvaluatorShimConfiguration()
       .bindNamedParameter(RemoteConfiguration.MessageCodec.class, REEFMessageCodec.class)
       .bindNamedParameter(DriverRemoteIdentifier.class, DRIVER_REMOTE_IDENTIFIER)
       .bindNamedParameter(ContainerIdentifier.class, CONTAINER_IDENTIFIER)
-      .bindNamedParameter(RemoteConfiguration.Port.class, CONTAINER_PORT)
-      .bindNamedParameter(RemoteConfiguration.HostAddress.class, DRIVER_HOST_ADDRESS)
       .build();
 }

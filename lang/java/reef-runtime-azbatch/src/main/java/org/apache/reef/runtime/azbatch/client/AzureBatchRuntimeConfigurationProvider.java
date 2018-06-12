@@ -74,7 +74,7 @@ public final class AzureBatchRuntimeConfigurationProvider {
   }
 
   public Configuration getAzureBatchRuntimeConfiguration() {
-    String[] ports = {"1000", "1001", "1002", "1003", "1004", "1005", "1006", "1007", "1008", "1009"};
+    String[] ports = {"3000", "3001", "3002", "3003", "3004" };
 
     final String availablePortsList = StringUtils.join(ports, ",");
 

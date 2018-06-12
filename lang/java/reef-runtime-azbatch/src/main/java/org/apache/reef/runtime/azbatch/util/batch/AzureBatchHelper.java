@@ -19,6 +19,7 @@
 package org.apache.reef.runtime.azbatch.util.batch;
 
 import com.microsoft.azure.batch.BatchClient;
+import com.microsoft.azure.batch.BatchClientBehavior;
 import com.microsoft.azure.batch.protocol.models.*;
 
 import org.apache.reef.runtime.azbatch.parameters.AzureBatchPoolId;
@@ -49,6 +50,11 @@ public final class AzureBatchHelper {
    */
   private static final String AZ_BATCH_JOB_ID_ENV = "AZ_BATCH_JOB_ID";
 
+  /*
+   * Environment variable that contains the Azure Batch taskId.
+   */
+  private static final String AZ_BATCH_TASK_ID_ENV = "AZ_BATCH_TASK_ID";
+
   private final AzureBatchFileNames azureBatchFileNames;
 
   private final BatchClient client;
@@ -63,6 +69,8 @@ public final class AzureBatchHelper {
       @Parameter(AzureBatchPoolId.class) final String azureBatchPoolId) {
     this.azureBatchFileNames = azureBatchFileNames;
 
+    LOG.log(Level.INFO, "credentialProvider is " + credentialProvider.getClass().getName());
+    LOG.log(Level.INFO, "AZ_BATCH_AUTH_TOKEN_ENV is " + System.getenv("AZ_BATCH_AUTHENTICATION_TOKEN"));
     this.client = BatchClient.open(credentialProvider.getCredentials());
     this.poolInfo = new PoolInformation().withPoolId(azureBatchPoolId);
     this.portProvider = portProvider;
@@ -151,11 +159,10 @@ public final class AzureBatchHelper {
    * @param jobJarUri the publicly accessible uri list to the job jar directory.
    * @param confUri   the publicly accessible uri list to the job configuration directory.
    * @param command   the commandline argument to execute the job.
-   * @param containerPort the port that the docker container needs to run on.
    * @throws IOException
    */
   public void submitTask(final String jobId, final String taskId, final URI jobJarUri,
-                         final URI confUri, final String command, final String containerPort)
+                         final URI confUri, final String command)
       throws IOException {
 
     final List<ResourceFile> resources = new ArrayList<>();
@@ -177,15 +184,18 @@ public final class AzureBatchHelper {
         .withUserName("sharathmcontainerreg")
         .withPassword("kALVT7bI=cFlOEgQtcRDX5vHXAj42GtC");
 
-    String containerRunOptions = "--env HOST_IP_ADDR_PATH=$AZ_BATCH_NODE_SHARED_DIR/hostip.txt";
-    if(containerPort != null) {
-      containerRunOptions += " -p " + containerPort;
+    String portMappings = "";
+    Iterator<Integer> iterator = this.portProvider.iterator();
+    while (iterator.hasNext()) {
+      Integer port = iterator.next();
+      System.out.println("iter port is " + port);
+      portMappings += String.format("-p %d:%d ", port, port);
     }
 
     TaskContainerSettings containerSettings = new TaskContainerSettings()
         .withRegistry(registry)
         .withImageName("sharathmcontainerreg.azurecr.io/ubuntuwithjdk")
-        .withContainerRunOptions(containerRunOptions);
+        .withContainerRunOptions("--env HOST_IP_ADDR_PATH=$AZ_BATCH_NODE_SHARED_DIR/hostip.txt " + portMappings);
 
     final TaskAddParameter taskAddParameter = new TaskAddParameter()
         .withId(taskId)
@@ -220,5 +230,35 @@ public final class AzureBatchHelper {
    */
   public String getAzureBatchJobId() {
     return System.getenv(AZ_BATCH_JOB_ID_ENV);
+  }
+
+  public String getAzureBatchTaskId() {
+    return System.getenv(AZ_BATCH_TASK_ID_ENV);
+  }
+
+  public String getAzureBatchNodeId() throws IOException {
+    return this.getTask().nodeInfo().nodeId();
+  }
+
+  public CloudTask getTask() throws IOException
+  {
+    return this.client.taskOperations().getTask(this.getAzureBatchJobId(), this.getAzureBatchTaskId());
+  }
+
+  public CloudTask getJobManagerTaskFromJobId(String jobId) throws IOException
+  {
+    String driverTaskId = this.client.jobOperations().getJob(jobId).jobManagerTask().id();
+    return this.client.taskOperations().getTask(jobId, driverTaskId);
+  }
+
+  public ComputeNode getComputeNode() throws IOException
+  {
+    for(NodeAgentSku sku : this.client.accountOperations().listNodeAgentSkus()) {
+      LOG.log(Level.INFO, "sku.Id is " + sku.id());
+    }
+
+    LOG.log(Level.INFO, "node id is " + this.getAzureBatchNodeId());
+    LOG.log(Level.INFO, "pool id is " + this.poolInfo.poolId());
+    return this.client.computeNodeOperations().getComputeNode(this.poolInfo.poolId(), this.getAzureBatchNodeId());
   }
 }

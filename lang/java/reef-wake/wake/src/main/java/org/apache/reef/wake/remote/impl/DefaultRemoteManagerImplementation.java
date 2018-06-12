@@ -83,6 +83,9 @@ public final class DefaultRemoteManagerImplementation implements RemoteManager {
         final TransportFactory tpFactory,
         final TcpPortProvider tcpPortProvider) {
 
+    LOG.log(Level.INFO, "hostAddress is " + hostAddress);
+    LOG.log(Level.INFO, "listeningPort is " + listeningPort);
+    LOG.log(Level.INFO, "tcpPortProvider is " + tcpPortProvider.getClass().getName());
     this.name = name;
     this.handlerContainer = new HandlerContainer<>(name, codec);
 
@@ -95,7 +98,8 @@ public final class DefaultRemoteManagerImplementation implements RemoteManager {
 
     this.handlerContainer.setTransport(this.transport);
 
-    this.myIdentifier = new SocketRemoteIdentifier((InetSocketAddress)this.transport.getLocalAddress());
+    InetSocketAddress address = new InetSocketAddress(localAddressProvider.getLocalAddress(), this.transport.getListeningPort());
+    this.myIdentifier = new SocketRemoteIdentifier(address);
 
     this.reSendStage = new RemoteSenderStage(codec, this.transport, 10);
 

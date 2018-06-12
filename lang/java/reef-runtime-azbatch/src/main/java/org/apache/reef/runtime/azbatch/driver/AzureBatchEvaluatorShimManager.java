@@ -51,12 +51,14 @@ import org.apache.reef.wake.EventHandler;
 import org.apache.reef.wake.remote.RemoteConfiguration;
 import org.apache.reef.wake.remote.RemoteMessage;
 import org.apache.reef.wake.remote.impl.SocketRemoteIdentifier;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -104,7 +106,6 @@ public final class AzureBatchEvaluatorShimManager
   private final CommandBuilder launchCommandBuilder;
   private final REEFEventHandlers reefEventHandlers;
   private final ConfigurationSerializer configurationSerializer;
-
   private final Evaluators evaluators;
 
   @Inject
@@ -422,20 +423,14 @@ public final class AzureBatchEvaluatorShimManager
   }
 
   private void createAzureBatchTask(final String taskId, final URI jarFileUri, final String driverIdentifier) throws IOException, InjectionException {
-    String containerPort = null;
-    final Configuration shimConfig = this.evaluatorShimConfigurationProvider.getConfiguration(taskId, driverIdentifier);
-    for (final NamedParameterNode<?> opt : shimConfig.getNamedParameters()) {
-      if (opt.getFullName() == RemoteConfiguration.Port.class.getName()) {
-        containerPort = shimConfig.getNamedParameter(opt);
-      }
-    }
 
+    final Configuration shimConfig = this.evaluatorShimConfigurationProvider.getConfiguration(taskId, driverIdentifier);
     final File shim = new File(this.reefFileNames.getLocalFolderPath(),
         taskId + '-' + this.azureBatchFileNames.getEvaluatorShimConfigurationName());
     this.configurationSerializer.toFile(shimConfig, shim);
     final URI shimUri = this.uploadFile(shim);
     this.azureBatchHelper.submitTask(this.azureBatchHelper.getAzureBatchJobId(), taskId, jarFileUri,
-        shimUri, getEvaluatorShimLaunchCommand(), containerPort);
+        shimUri, getEvaluatorShimLaunchCommand());
   }
 
   private File writeFileResourcesJarFile(final Set<FileResource> fileResourceSet) throws IOException {

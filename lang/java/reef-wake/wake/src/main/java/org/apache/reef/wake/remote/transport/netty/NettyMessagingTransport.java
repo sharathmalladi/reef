@@ -123,7 +123,8 @@ public final class NettyMessagingTransport implements Transport {
     if (listenPort < 0) {
       throw new RemoteRuntimeException("Invalid server port: " + listenPort);
     }
-
+    LOG.log(Level.INFO, "NettyMessagingTransport localAddressProvider is: " + localAddressProvider.getLocalAddress());
+    LOG.log(Level.INFO, "NettyMessagingTransport localAddressProvider class is: " + localAddressProvider.getClass().getName());
     final String host = UNKNOWN_HOST_NAME.equals(hostAddress) ? localAddressProvider.getLocalAddress() : hostAddress;
 
     this.numberOfTries = numberOfTries;
@@ -155,7 +156,7 @@ public final class NettyMessagingTransport implements Transport {
         .option(ChannelOption.SO_REUSEADDR, true)
         .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-    LOG.log(Level.FINE, "Binding to {0}:{1}", new Object[] {host, listenPort});
+    LOG.log(Level.INFO, "Binding to {0}:{1}", new Object[] {host, listenPort});
 
 
       try {
@@ -193,7 +194,7 @@ public final class NettyMessagingTransport implements Transport {
       throw new TransportRuntimeException("Cannot bind to port " + listenPort, ex);
     }
 
-    LOG.log(Level.FINE, "Starting netty transport socket address: {0}", this.localAddress);
+    LOG.log(Level.INFO, "Starting netty transport socket address: {0}", this.localAddress);
   }
 
   /**

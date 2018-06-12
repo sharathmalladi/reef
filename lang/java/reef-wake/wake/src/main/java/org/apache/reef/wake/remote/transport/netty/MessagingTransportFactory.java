@@ -32,6 +32,8 @@ import org.apache.reef.wake.remote.transport.Transport;
 import org.apache.reef.wake.remote.transport.TransportFactory;
 
 import javax.inject.Inject;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Factory that creates a messaging transport.
@@ -39,10 +41,12 @@ import javax.inject.Inject;
 public final class MessagingTransportFactory implements TransportFactory {
 
   private final String localAddress;
+  private static final Logger LOG = Logger.getLogger(MessagingTransportFactory.class.getName());
 
   @Inject
   private MessagingTransportFactory(final LocalAddressProvider localAddressProvider) {
     this.localAddress = localAddressProvider.getLocalAddress();
+    LOG.log(Level.INFO, "this.localAddress in MessagingTransportFactory is " + this.localAddress);
   }
 
   /**
