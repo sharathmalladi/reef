@@ -26,6 +26,7 @@ import com.microsoft.azure.batch.protocol.models.PoolEndpointConfiguration;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.JsonDecoder;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.commons.lang.StringUtils;
 import org.apache.reef.annotations.audience.Interop;
 import org.apache.reef.reef.bridge.client.avro.AvroAzureBatchJobSubmissionParameters;
 import org.apache.reef.runtime.azbatch.client.AzureBatchRuntimeConfiguration;
@@ -117,8 +118,9 @@ public final class AzureBatchBootstrapREEFLauncher {
         }
       }
 
+      final String ports = StringUtils.join(availablePorts.toArray(), TcpPortList.SEPARATOR);
       if (availablePorts.size() > 0) {
-        launcherConfigBuilder.bindList(TcpPortList.class, availablePorts)
+        launcherConfigBuilder.bindNamedParameter(TcpPortList.class, ports)
             .bindImplementation(TcpPortProvider.class, ListTcpPortProvider.class);
       }
     }
