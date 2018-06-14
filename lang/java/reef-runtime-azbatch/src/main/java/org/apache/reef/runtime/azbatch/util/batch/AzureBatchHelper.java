@@ -19,19 +19,21 @@
 package org.apache.reef.runtime.azbatch.util.batch;
 
 import com.microsoft.azure.batch.BatchClient;
+import com.microsoft.azure.batch.BatchClientBehavior;
 import com.microsoft.azure.batch.protocol.models.*;
 
-import org.apache.reef.runtime.azbatch.client.AzureBatchJobSubmissionHandler;
 import org.apache.reef.runtime.azbatch.parameters.AzureBatchPoolId;
 import org.apache.reef.runtime.azbatch.util.AzureBatchFileNames;
 import org.apache.reef.runtime.azbatch.util.storage.SharedAccessSignatureCloudBlobClientProvider;
 import org.apache.reef.tang.annotations.Parameter;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,27 +43,37 @@ import java.util.logging.Logger;
  */
 public final class AzureBatchHelper {
 
-  private static final Logger LOG = Logger.getLogger(AzureBatchJobSubmissionHandler.class.getName());
+  private static final Logger LOG = Logger.getLogger(AzureBatchHelper.class.getName());
 
   /*
    * Environment variable that contains the Azure Batch jobId.
    */
   private static final String AZ_BATCH_JOB_ID_ENV = "AZ_BATCH_JOB_ID";
 
+  /*
+   * Environment variable that contains the Azure Batch taskId.
+   */
+  private static final String AZ_BATCH_TASK_ID_ENV = "AZ_BATCH_TASK_ID";
+
   private final AzureBatchFileNames azureBatchFileNames;
 
   private final BatchClient client;
   private final PoolInformation poolInfo;
+  private final TcpPortProvider portProvider;
 
   @Inject
   public AzureBatchHelper(
       final AzureBatchFileNames azureBatchFileNames,
       final IAzureBatchCredentialProvider credentialProvider,
+      final TcpPortProvider portProvider,
       @Parameter(AzureBatchPoolId.class) final String azureBatchPoolId) {
     this.azureBatchFileNames = azureBatchFileNames;
 
+    LOG.log(Level.INFO, "credentialProvider is " + credentialProvider.getClass().getName());
+    LOG.log(Level.INFO, "AZ_BATCH_AUTH_TOKEN_ENV is " + System.getenv("AZ_BATCH_AUTHENTICATION_TOKEN"));
     this.client = BatchClient.open(credentialProvider.getCredentials());
     this.poolInfo = new PoolInformation().withPoolId(azureBatchPoolId);
+    this.portProvider = portProvider;
   }
 
   /**
@@ -90,12 +102,42 @@ public final class AzureBatchHelper {
         .withName(SharedAccessSignatureCloudBlobClientProvider.AZURE_STORAGE_CONTAINER_SAS_TOKEN_ENV)
         .withValue(storageContainerSAS);
 
+    ContainerRegistry registry = new ContainerRegistry()
+        .withRegistryServer("sharathmcontainerreg.azurecr.io")
+        .withUserName("sharathmcontainerreg")
+        .withPassword("kALVT7bI=cFlOEgQtcRDX5vHXAj42GtC");
+
+    String portMappings = "";
+
+    System.out.println("SHARATH PortProvider is " + this.portProvider.getClass().getName());
+
+    Iterator<Integer> iterator = this.portProvider.iterator();
+    while (iterator.hasNext()) {
+      Integer port = iterator.next();
+      System.out.println("iter port is " + port);
+      portMappings += String.format("-p %d:%d ", port, port);
+    }
+
+    TaskContainerSettings containerSettings = new TaskContainerSettings()
+        .withRegistry(registry)
+        .withImageName("sharathmcontainerreg.azurecr.io/ubuntuwithjdk")
+        .withContainerRunOptions("-dit --env HOST_IP_ADDR_PATH=$AZ_BATCH_NODE_SHARED_DIR/hostip.txt " + portMappings);
+
+    String captureIpAddressCommandLine =
+        "/bin/bash -c \"rm -f $AZ_BATCH_NODE_SHARED_DIR/hostip.txt;" +
+            " echo `hostname -i` > $AZ_BATCH_NODE_SHARED_DIR/hostip.txt\"";
+    JobPreparationTask jobPreparationTask = new JobPreparationTask()
+        .withId("CaptureHostIpAddress")
+        .withCommandLine(captureIpAddressCommandLine);
+
     JobManagerTask jobManagerTask = new JobManagerTask()
         .withRunExclusive(false)
         .withId(applicationId)
         .withResourceFiles(Collections.singletonList(jarResourceFile))
         .withEnvironmentSettings(Collections.singletonList(environmentSetting))
         .withAuthenticationTokenSettings(authenticationTokenSettings)
+        .withKillJobOnCompletion(false)
+        .withContainerSettings(containerSettings)
         .withCommandLine(command);
 
     LOG.log(Level.INFO, "Job Manager (aka driver) task command: " + command);
@@ -103,6 +145,7 @@ public final class AzureBatchHelper {
     JobAddParameter jobAddParameter = new JobAddParameter()
         .withId(applicationId)
         .withJobManagerTask(jobManagerTask)
+        .withJobPreparationTask(jobPreparationTask)
         .withPoolInfo(poolInfo);
 
     client.jobOperations().createJob(jobAddParameter);
@@ -136,9 +179,28 @@ public final class AzureBatchHelper {
 
     LOG.log(Level.INFO, "Evaluator task command: " + command);
 
+    ContainerRegistry registry = new ContainerRegistry()
+        .withRegistryServer("sharathmcontainerreg.azurecr.io")
+        .withUserName("sharathmcontainerreg")
+        .withPassword("kALVT7bI=cFlOEgQtcRDX5vHXAj42GtC");
+
+    String portMappings = "";
+    Iterator<Integer> iterator = this.portProvider.iterator();
+    while (iterator.hasNext()) {
+      Integer port = iterator.next();
+      System.out.println("iter port is " + port);
+      portMappings += String.format("-p %d:%d ", port, port);
+    }
+
+    TaskContainerSettings containerSettings = new TaskContainerSettings()
+        .withRegistry(registry)
+        .withImageName("sharathmcontainerreg.azurecr.io/ubuntuwithjdk")
+        .withContainerRunOptions("--env HOST_IP_ADDR_PATH=$AZ_BATCH_NODE_SHARED_DIR/hostip.txt " + portMappings);
+
     final TaskAddParameter taskAddParameter = new TaskAddParameter()
         .withId(taskId)
         .withResourceFiles(resources)
+        .withContainerSettings(containerSettings)
         .withCommandLine(command);
 
     this.client.taskOperations().createTask(jobId, taskAddParameter);
@@ -168,5 +230,35 @@ public final class AzureBatchHelper {
    */
   public String getAzureBatchJobId() {
     return System.getenv(AZ_BATCH_JOB_ID_ENV);
+  }
+
+  public String getAzureBatchTaskId() {
+    return System.getenv(AZ_BATCH_TASK_ID_ENV);
+  }
+
+  public String getAzureBatchNodeId() throws IOException {
+    return this.getTask().nodeInfo().nodeId();
+  }
+
+  public CloudTask getTask() throws IOException
+  {
+    return this.client.taskOperations().getTask(this.getAzureBatchJobId(), this.getAzureBatchTaskId());
+  }
+
+  public CloudTask getJobManagerTaskFromJobId(String jobId) throws IOException
+  {
+    String driverTaskId = this.client.jobOperations().getJob(jobId).jobManagerTask().id();
+    return this.client.taskOperations().getTask(jobId, driverTaskId);
+  }
+
+  public ComputeNode getComputeNode() throws IOException
+  {
+    for(NodeAgentSku sku : this.client.accountOperations().listNodeAgentSkus()) {
+      LOG.log(Level.INFO, "sku.Id is " + sku.id());
+    }
+
+    LOG.log(Level.INFO, "node id is " + this.getAzureBatchNodeId());
+    LOG.log(Level.INFO, "pool id is " + this.poolInfo.poolId());
+    return this.client.computeNodeOperations().getComputeNode(this.poolInfo.poolId(), this.getAzureBatchNodeId());
   }
 }

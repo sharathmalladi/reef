@@ -25,6 +25,7 @@ import org.apache.reef.runtime.common.evaluator.parameters.DriverRemoteIdentifie
 import org.apache.reef.runtime.common.launch.REEFMessageCodec;
 import org.apache.reef.tang.formats.ConfigurationModule;
 import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
+import org.apache.reef.tang.formats.OptionalParameter;
 import org.apache.reef.tang.formats.RequiredParameter;
 import org.apache.reef.wake.remote.RemoteConfiguration;
 

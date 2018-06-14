@@ -18,8 +18,10 @@
  */
 package org.apache.reef.runtime.azbatch.client;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.reef.annotations.audience.Private;
 import org.apache.reef.runtime.azbatch.driver.AzureBatchDriverConfiguration;
+import org.apache.reef.runtime.azbatch.driver.AzureBatchEvaluatorShimManager;
 import org.apache.reef.runtime.azbatch.driver.RuntimeIdentifier;
 import org.apache.reef.runtime.azbatch.parameters.AzureBatchAccountName;
 import org.apache.reef.runtime.azbatch.parameters.AzureBatchPoolId;
@@ -31,10 +33,25 @@ import org.apache.reef.runtime.common.client.DriverConfigurationProvider;
 import org.apache.reef.runtime.common.parameters.JVMHeapSlack;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.Configurations;
+import org.apache.reef.tang.JavaConfigurationBuilder;
+import org.apache.reef.tang.Tang;
 import org.apache.reef.tang.annotations.Parameter;
+import org.apache.reef.tang.exceptions.InjectionException;
+import org.apache.reef.wake.remote.address.ContainerBasedLocalAddressProvider;
+import org.apache.reef.wake.remote.address.LocalAddressProvider;
+import org.apache.reef.wake.remote.address.LoopbackLocalAddressProvider;
+import org.apache.reef.wake.remote.ports.ListTcpPortProvider;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
 
 import javax.inject.Inject;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 /**
  * Configuration provider for the Azure Batch runtime.
@@ -82,9 +99,18 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
                                               final String clientRemoteId,
                                               final String jobId,
                                               final Configuration applicationConfiguration) {
+
+
+    String[] ports = {"2000", "2001" };
+
+    final String availablePortsList = StringUtils.join(ports, ",");
     return Configurations.merge(
         AzureBatchDriverConfiguration.CONF.getBuilder()
-            .bindImplementation(CommandBuilder.class, this.commandBuilder.getClass()).build()
+            .bindImplementation(CommandBuilder.class, this.commandBuilder.getClass())
+            .bindImplementation(LocalAddressProvider.class, ContainerBasedLocalAddressProvider.class)
+            .bindNamedParameter(TcpPortList.class, availablePortsList)
+            .bindImplementation(TcpPortProvider.class, ListTcpPortProvider.class)
+            .build()
             .set(AzureBatchDriverConfiguration.JOB_IDENTIFIER, jobId)
             .set(AzureBatchDriverConfiguration.CLIENT_REMOTE_IDENTIFIER, clientRemoteId)
             .set(AzureBatchDriverConfiguration.JVM_HEAP_SLACK, this.jvmSlack)

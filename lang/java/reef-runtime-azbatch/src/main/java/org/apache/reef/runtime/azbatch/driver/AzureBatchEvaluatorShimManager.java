@@ -43,17 +43,22 @@ import org.apache.reef.runtime.common.driver.resourcemanager.RuntimeStatusEventI
 import org.apache.reef.runtime.common.files.*;
 import org.apache.reef.runtime.common.utils.RemoteManager;
 import org.apache.reef.tang.Configuration;
+import org.apache.reef.tang.exceptions.InjectionException;
 import org.apache.reef.tang.formats.ConfigurationSerializer;
+import org.apache.reef.tang.types.NamedParameterNode;
 import org.apache.reef.util.Optional;
 import org.apache.reef.wake.EventHandler;
+import org.apache.reef.wake.remote.RemoteConfiguration;
 import org.apache.reef.wake.remote.RemoteMessage;
 import org.apache.reef.wake.remote.impl.SocketRemoteIdentifier;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -101,7 +106,6 @@ public final class AzureBatchEvaluatorShimManager
   private final CommandBuilder launchCommandBuilder;
   private final REEFEventHandlers reefEventHandlers;
   private final ConfigurationSerializer configurationSerializer;
-
   private final Evaluators evaluators;
 
   @Inject
@@ -156,11 +160,12 @@ public final class AzureBatchEvaluatorShimManager
                                   final String containerId,
                                   final URI jarFileUri) {
     try {
-      createAzureBatchTask(containerId, jarFileUri);
+      LOG.log(Level.INFO, "SHARATH In shim manager onResourceRequested: " + this.remoteManager.getMyIdentifier());
+      createAzureBatchTask(containerId, jarFileUri, this.remoteManager.getMyIdentifier());
       this.outstandingResourceRequests.put(containerId, resourceRequestEvent);
       this.outstandingResourceRequestCount.incrementAndGet();
       this.updateRuntimeStatus();
-    } catch (IOException e) {
+    } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to create Azure Batch task with the following exception: {0}", e);
       throw new RuntimeException(e);
     }
@@ -417,8 +422,9 @@ public final class AzureBatchEvaluatorShimManager
         .setType(type).build();
   }
 
-  private void createAzureBatchTask(final String taskId, final URI jarFileUri) throws IOException {
-    final Configuration shimConfig = this.evaluatorShimConfigurationProvider.getConfiguration(taskId);
+  private void createAzureBatchTask(final String taskId, final URI jarFileUri, final String driverIdentifier) throws IOException, InjectionException {
+
+    final Configuration shimConfig = this.evaluatorShimConfigurationProvider.getConfiguration(taskId, driverIdentifier);
     final File shim = new File(this.reefFileNames.getLocalFolderPath(),
         taskId + '-' + this.azureBatchFileNames.getEvaluatorShimConfigurationName());
     this.configurationSerializer.toFile(shimConfig, shim);

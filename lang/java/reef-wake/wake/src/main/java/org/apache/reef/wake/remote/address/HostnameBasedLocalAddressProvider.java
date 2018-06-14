@@ -56,6 +56,7 @@ public final class HostnameBasedLocalAddressProvider implements LocalAddressProv
       }
     }
     assert null != cached;
+    LOG.log(Level.INFO, "Returning HostnameBasedLocalAddressProvider.getLocalAddress() as " + cached);
     return cached;
   }
 

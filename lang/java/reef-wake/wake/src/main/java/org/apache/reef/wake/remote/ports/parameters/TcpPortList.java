@@ -21,16 +21,18 @@ package org.apache.reef.wake.remote.ports.parameters;
 import org.apache.reef.tang.annotations.Name;
 import org.apache.reef.tang.annotations.NamedParameter;
 
-/**
- * Number of tcp ports in the range.
- */
-@NamedParameter(doc = "Number of tcp ports in the range", default_value = TcpPortRangeCount.DEFAULT_VALUE)
-public final class TcpPortRangeCount implements Name<Integer> {
-  public static final String DEFAULT_VALUE = "10";
+import java.util.List;
 
+/**
+ * An list of tcp port numbers to try.
+ */
+@NamedParameter(doc = "An list of tcp port numbers to try")
+public final class TcpPortList implements Name<String> {
+
+  public static final char SEPARATOR = ',';
   /**
    * Empty private constructor to prohibit instantiation of utility class.
    */
-  private TcpPortRangeCount() {
+  private TcpPortList() {
   }
 }

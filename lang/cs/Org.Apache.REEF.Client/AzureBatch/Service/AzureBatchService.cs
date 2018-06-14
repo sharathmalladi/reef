@@ -94,7 +94,15 @@ namespace Org.Apache.REEF.Client.DotNet.AzureBatch
         {
             CloudJob unboundJob = this.Client.JobOperations.CreateJob();
             unboundJob.Id = jobId;
+            ContainerRegistry containerRegistry = new ContainerRegistry(
+                "tyclintwscratchcontreg",
+                "tyclintwscratchcontreg.azurecr.io",
+                "KxQu1bZs0sBVE2F5T0EJ1ouMmPJdwe+h");
+
+            UserIdentity user = new UserIdentity(new AutoUserSpecification(AutoUserScope.Task, ElevationLevel.Admin));
+
             unboundJob.PoolInformation = new PoolInformation() { PoolId = this.PoolId };
+            unboundJob.OnAllTasksComplete = OnAllTasksComplete.NoAction;
             unboundJob.JobManagerTask = new JobManagerTask()
             {
                 Id = jobId,
@@ -104,8 +112,20 @@ namespace Org.Apache.REEF.Client.DotNet.AzureBatch
                 ResourceFiles = resourceFile != null
                     ? new List<ResourceFile>() { new ResourceFile(resourceFile.AbsoluteUri, AzureBatchFileNames.GetTaskJarFileName()) }
                     : new List<ResourceFile>(),
-
+                ContainerSettings = new TaskContainerSettings(
+                    "tyclintwscratchcontreg.azurecr.io/windows-dotnet-java",
+                    "--env HOST_IP_ADDR_PATH=^%AZ_BATCH_NODE_SHARED_DIR^%/hostip.txt -p 3000",
+                    containerRegistry),
+                UserIdentity = user
                 EnvironmentSettings = new List<EnvironmentSetting> { new EnvironmentSetting(AzureStorageContainerSasToken, storageContainerSAS) },
+
+                JobPreparationTask preparationTask = new JobPreparationTask()
+                {
+                    CommandLine = "powershell /c \"Remove-Item -ErrorAction SilentlyContinue " +
+                    "(Join-Path -Path $env:AZ_BATCH_NODE_SHARED_DIR -ChildPath hostip.txt); " +
+                    "(Test-Connection -ComputerName (hostname) -Count 1| Select IPV4Address).IPV4Address.IPAddressToString " +
+                    "> (Join-Path -Path $env:AZ_BATCH_NODE_SHARED_DIR -ChildPath hostip.txt)\""
+                };
 
                 // This setting will signal Batch to generate an access token and pass it
                 // to the Job Manager Task (aka the Driver) as an environment variable.
@@ -114,6 +134,7 @@ namespace Org.Apache.REEF.Client.DotNet.AzureBatch
                 AuthenticationTokenSettings = new AuthenticationTokenSettings() { Access = AccessScope.Job }
             };
 
+            unboundJob.JobPreparationTask = preparationTask;
             unboundJob.Commit();
 
             LOGGER.Log(Level.Info, "Submitted job {0}, commandLine {1} ", jobId, commandLine);
@@ -131,6 +152,17 @@ namespace Org.Apache.REEF.Client.DotNet.AzureBatch
         public Task<CloudJob> GetJobAsync(string jobId, DetailLevel detailLevel)
         {
             return this.Client.JobOperations.GetJobAsync(jobId, detailLevel);
+        }
+
+        public CloudTask GetJobManagerTaskFromJobId(string jobId)
+        {
+            string driverTaskId = this.Client.JobOperations.GetJob(jobId).JobManagerTask.Id;
+            return this.Client.JobOperations.GetTask(jobId, driverTaskId);
+        }
+
+        public ComputeNode GetComputeNodeFromNodeId(string nodeId)
+        {
+            return this.Client.PoolOperations.GetComputeNode(this.PoolId, nodeId);
         }
 
         #endregion

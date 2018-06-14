@@ -27,6 +27,7 @@ import org.apache.reef.runtime.common.driver.api.ResourceRequestEvent;
 import org.apache.reef.runtime.common.parameters.JVMHeapSlack;
 import org.apache.reef.tang.annotations.Parameter;
 import org.apache.reef.tang.formats.ConfigurationSerializer;
+import org.apache.reef.wake.remote.address.LocalAddressProvider;
 
 import javax.inject.Inject;
 import java.net.URI;
@@ -51,6 +52,7 @@ public final class AzureBatchResourceManager {
   private final CommandBuilder launchCommandBuilder;
   private final AzureBatchEvaluatorShimManager evaluatorShimManager;
   private final AzureBatchTaskStatusAlarmHandler azureBatchTaskStatusAlarmHandler;
+  private final LocalAddressProvider localAddressProvider;
 
   private final double jvmHeapFactor;
 
@@ -60,6 +62,7 @@ public final class AzureBatchResourceManager {
       final CommandBuilder launchCommandBuilder,
       final AzureBatchEvaluatorShimManager evaluatorShimManager,
       final AzureBatchTaskStatusAlarmHandler azureBatchTaskStatusAlarmHandler,
+      final LocalAddressProvider localAddressProvider,
       @Parameter(JVMHeapSlack.class) final double jvmHeapSlack) {
     this.configurationSerializer = configurationSerializer;
     this.evaluatorShimManager = evaluatorShimManager;
@@ -68,6 +71,7 @@ public final class AzureBatchResourceManager {
     this.containerRequests = new ConcurrentHashMap<>();
     this.containerCount = new AtomicInteger(0);
     this.azureBatchTaskStatusAlarmHandler = azureBatchTaskStatusAlarmHandler;
+    this.localAddressProvider = localAddressProvider;
   }
 
   /**
