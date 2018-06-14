@@ -97,7 +97,7 @@ public class AzureBatchEvaluatorShimConfigurationProvider {
         .bindNamedParameter(TcpPortList.class, availablePortsList)
         .bindImplementation(TcpPortProvider.class, ListTcpPortProvider.class)
         .build()
-        .set(EvaluatorShimConfiguration.DRIVER_REMOTE_IDENTIFIER, getRemoteIdentifier())
+        .set(EvaluatorShimConfiguration.DRIVER_REMOTE_IDENTIFIER, this.remoteManager.getMyIdentifier())
         .set(EvaluatorShimConfiguration.CONTAINER_IDENTIFIER, containerId)
         .build();
   }
