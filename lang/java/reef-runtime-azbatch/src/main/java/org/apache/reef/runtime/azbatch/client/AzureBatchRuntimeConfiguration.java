@@ -23,10 +23,12 @@ import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.formats.AvroConfigurationSerializer;
 
 import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
+import org.apache.reef.tang.formats.OptionalParameter;
 import org.apache.reef.tang.formats.RequiredParameter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Configuration Module for the Azure Batch runtime.
