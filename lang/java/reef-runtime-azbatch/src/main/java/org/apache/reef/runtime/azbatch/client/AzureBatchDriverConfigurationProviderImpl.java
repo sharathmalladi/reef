@@ -22,12 +22,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.reef.annotations.audience.Private;
 import org.apache.reef.runtime.azbatch.driver.AzureBatchDriverConfiguration;
 import org.apache.reef.runtime.azbatch.driver.RuntimeIdentifier;
-import org.apache.reef.runtime.azbatch.parameters.AzureBatchAccountName;
-import org.apache.reef.runtime.azbatch.parameters.AzureBatchPoolId;
+import org.apache.reef.runtime.azbatch.parameters.*;
 import org.apache.reef.runtime.azbatch.util.command.CommandBuilder;
-import org.apache.reef.runtime.azbatch.parameters.AzureBatchAccountUri;
-import org.apache.reef.runtime.azbatch.parameters.AzureStorageAccountName;
-import org.apache.reef.runtime.azbatch.parameters.AzureStorageContainerName;
 import org.apache.reef.runtime.common.client.DriverConfigurationProvider;
 import org.apache.reef.runtime.common.parameters.JVMHeapSlack;
 import org.apache.reef.tang.Configuration;
@@ -41,6 +37,8 @@ import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
 
 import javax.inject.Inject;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Configuration provider for the Azure Batch runtime.
@@ -55,6 +53,9 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
   private final String azureStorageAccountName;
   private final String azureStorageContainerName;
   private final CommandBuilder commandBuilder;
+  private final List<String> azureBatchContainerPortList;
+  private final Boolean isDockerContainer;
+  private final static String SEPARATOR = ",";
 
   @Inject
   private AzureBatchDriverConfigurationProviderImpl(
@@ -64,6 +65,7 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
       @Parameter(AzureBatchPoolId.class) final String azureBatchPoolId,
       @Parameter(AzureStorageAccountName.class) final String azureStorageAccountName,
       @Parameter(AzureStorageContainerName.class) final String azureStorageContainerName,
+      @Parameter(AzureBatchContainerPortList.class) final String azureBatchContainerPortList,
       final CommandBuilder commandBuilder) {
     this.jvmSlack = jvmSlack;
     this.azureBatchAccountUri = azureBatchAccountUri;
@@ -72,6 +74,17 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
     this.azureStorageAccountName = azureStorageAccountName;
     this.azureStorageContainerName = azureStorageContainerName;
     this.commandBuilder = commandBuilder;
+    this.azureBatchContainerPortList = new ArrayList<>();
+    String[] ports = StringUtils.split(azureBatchContainerPortList, SEPARATOR);
+    for (int i = 0; i < ports.length; i++) {
+      this.azureBatchContainerPortList.add(ports[i]);
+    }
+
+    if (ports.length > 0) {
+      this.isDockerContainer = true;
+    } else {
+      this.isDockerContainer = false;
+    }
   }
 
   /**
@@ -90,14 +103,10 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
                                               final Configuration applicationConfiguration) {
 
 
-    String[] ports = {"2000", "2001" };
-
-    final String availablePortsList = StringUtils.join(ports, ",");
     return Configurations.merge(
         AzureBatchDriverConfiguration.CONF.getBuilder()
             .bindImplementation(CommandBuilder.class, this.commandBuilder.getClass())
             .bindImplementation(LocalAddressProvider.class, ContainerBasedLocalAddressProvider.class)
-            .bindNamedParameter(TcpPortList.class, availablePortsList)
             .bindImplementation(TcpPortProvider.class, ListTcpPortProvider.class)
             .build()
             .set(AzureBatchDriverConfiguration.JOB_IDENTIFIER, jobId)
@@ -109,6 +118,8 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
             .set(AzureBatchDriverConfiguration.AZURE_BATCH_POOL_ID, this.azureBatchPoolId)
             .set(AzureBatchDriverConfiguration.AZURE_STORAGE_ACCOUNT_NAME, this.azureStorageAccountName)
             .set(AzureBatchDriverConfiguration.AZURE_STORAGE_CONTAINER_NAME, this.azureStorageContainerName)
+            .set(AzureBatchDriverConfiguration.AZURE_BATCH_CONTAINER_PORT_LIST, this.azureBatchContainerPortList)
+            .set(AzureBatchDriverConfiguration.IS_CONTAINER_BASED_POOL, this.isDockerContainer)
             .build(),
         applicationConfiguration);
   }
