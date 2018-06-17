@@ -152,8 +152,11 @@ public final class AzureBatchBootstrapREEFLauncher {
 
   private static Configuration generateConfigurationFromJobSubmissionParameters(
       final AvroAzureBatchJobSubmissionParameters avroAzureBatchJobSubmissionParameters) {
+    Boolean isDockerContainer = avroAzureBatchJobSubmissionParameters.getAzureBatchPoolDriverPortsList().size() > 0;
     return AzureBatchRuntimeConfigurationCreator
-        .getOrCreateAzureBatchRuntimeConfiguration(avroAzureBatchJobSubmissionParameters.getAzureBatchIsWindows())
+        .getOrCreateAzureBatchRuntimeConfiguration(
+            avroAzureBatchJobSubmissionParameters.getAzureBatchIsWindows(),
+            isDockerContainer)
         .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_NAME,
             avroAzureBatchJobSubmissionParameters.getAzureBatchAccountName().toString())
         .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_KEY,

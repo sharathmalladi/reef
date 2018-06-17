@@ -22,6 +22,7 @@ import org.apache.reef.annotations.audience.ClientSide;
 import org.apache.reef.annotations.audience.Public;
 import org.apache.reef.runtime.azbatch.AzureBatchClasspathProvider;
 import org.apache.reef.runtime.azbatch.AzureBatchJVMPathProvider;
+import org.apache.reef.runtime.azbatch.client.AzureBatchRuntimeConfiguration;
 import org.apache.reef.runtime.azbatch.parameters.*;
 import org.apache.reef.runtime.azbatch.util.batch.IAzureBatchCredentialProvider;
 import org.apache.reef.runtime.azbatch.util.batch.TokenBatchCredentialProvider;
@@ -41,6 +42,10 @@ import org.apache.reef.tang.formats.ConfigurationModule;
 import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
 import org.apache.reef.tang.formats.OptionalParameter;
 import org.apache.reef.tang.formats.RequiredParameter;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
+
+import java.util.List;
 
 /**
  * ConfigurationModule to create Azure Batch Driver configurations.
@@ -95,6 +100,37 @@ public final class AzureBatchDriverConfiguration extends ConfigurationModuleBuil
   public static final RequiredParameter<String> AZURE_STORAGE_CONTAINER_NAME = new RequiredParameter<>();
 
   /**
+<<<<<<< Updated upstream
+   * Container Registry Server.
+   */
+  public static final OptionalParameter<String> CONTAINER_REGISTRY_SERVER = new OptionalParameter<>();
+
+  /**
+   * Container Registry Username.
+   */
+  public static final OptionalParameter<String> CONTAINER_REGISTRY_USERNAME = new OptionalParameter<>();
+
+  /**
+   * Container Registry password.
+   */
+  public static final OptionalParameter<String> CONTAINER_REGISTRY_PASSWORD = new OptionalParameter<>();
+
+  /**
+   * Start of port range.
+   */
+  public static final OptionalParameter<Integer> TCP_PORT_RANGE_BEGIN = new OptionalParameter<>();
+
+  /**
+   * port range end.
+   */
+  public static final OptionalParameter<Integer> TCP_PORT_RANGE_END = new OptionalParameter<>();
+
+  /**
+   * The pool is docker container based.
+   */
+  public static final RequiredParameter<Boolean> IS_CONTAINER_BASED_POOL = new RequiredParameter<>();
+
+  /**
    * The fraction of the container memory NOT to use for the Java Heap.
    */
   public static final OptionalParameter<Double> JVM_HEAP_SLACK = new OptionalParameter<>();
@@ -115,6 +151,13 @@ public final class AzureBatchDriverConfiguration extends ConfigurationModuleBuil
       .bindNamedParameter(AzureStorageAccountName.class, AZURE_STORAGE_ACCOUNT_NAME)
       .bindNamedParameter(AzureStorageContainerName.class, AZURE_STORAGE_CONTAINER_NAME)
 
+      // Bind Azure Container Parameters
+      .bindNamedParameter(ContainerRegistryServer.class, CONTAINER_REGISTRY_SERVER)
+      .bindNamedParameter(ContainerRegistryUsername.class, CONTAINER_REGISTRY_USERNAME)
+      .bindNamedParameter(ContainerRegistryPassword.class, CONTAINER_REGISTRY_PASSWORD)
+      .bindNamedParameter(TcpPortRangeBegin.class, TCP_PORT_RANGE_BEGIN)
+      .bindNamedParameter(TcpPortRangeEnd.class, TCP_PORT_RANGE_END)
+
       // Bind the fields bound in AbstractDriverRuntimeConfiguration
       .bindNamedParameter(JobIdentifier.class, JOB_IDENTIFIER)
       .bindNamedParameter(LaunchID.class, JOB_IDENTIFIER)
@@ -122,6 +165,7 @@ public final class AzureBatchDriverConfiguration extends ConfigurationModuleBuil
       .bindNamedParameter(ClientRemoteIdentifier.class, CLIENT_REMOTE_IDENTIFIER)
       .bindNamedParameter(ErrorHandlerRID.class, CLIENT_REMOTE_IDENTIFIER)
       .bindNamedParameter(JVMHeapSlack.class, JVM_HEAP_SLACK)
+      .bindNamedParameter(IsContainerBased.class, IS_CONTAINER_BASED_POOL)
       .bindImplementation(RuntimeClasspathProvider.class, AzureBatchClasspathProvider.class)
       .bindImplementation(RuntimePathProvider.class, AzureBatchJVMPathProvider.class)
       .bindSetEntry(DefinedRuntimes.class, RUNTIME_NAME)

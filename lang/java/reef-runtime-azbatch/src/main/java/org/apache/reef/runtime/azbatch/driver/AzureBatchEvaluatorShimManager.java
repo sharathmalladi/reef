@@ -43,11 +43,14 @@ import org.apache.reef.runtime.common.driver.resourcemanager.RuntimeStatusEventI
 import org.apache.reef.runtime.common.files.*;
 import org.apache.reef.runtime.common.utils.RemoteManager;
 import org.apache.reef.tang.Configuration;
+import org.apache.reef.tang.Tang;
+import org.apache.reef.tang.exceptions.InjectionException;
 import org.apache.reef.tang.formats.ConfigurationSerializer;
 import org.apache.reef.util.Optional;
 import org.apache.reef.wake.EventHandler;
 import org.apache.reef.wake.remote.RemoteMessage;
 import org.apache.reef.wake.remote.impl.SocketRemoteIdentifier;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -160,7 +163,7 @@ public final class AzureBatchEvaluatorShimManager
       this.outstandingResourceRequests.put(containerId, resourceRequestEvent);
       this.outstandingResourceRequestCount.incrementAndGet();
       this.updateRuntimeStatus();
-    } catch (IOException e) {
+    } catch (IOException | InjectionException e) {
       LOG.log(Level.SEVERE, "Failed to create Azure Batch task with the following exception: {0}", e);
       throw new RuntimeException(e);
     }
@@ -417,14 +420,16 @@ public final class AzureBatchEvaluatorShimManager
         .setType(type).build();
   }
 
-  private void createAzureBatchTask(final String taskId, final URI jarFileUri) throws IOException {
+  private void createAzureBatchTask(final String taskId, final URI jarFileUri) throws IOException, InjectionException {
     final Configuration shimConfig = this.evaluatorShimConfigurationProvider.getConfiguration(taskId);
     final File shim = new File(this.reefFileNames.getLocalFolderPath(),
         taskId + '-' + this.azureBatchFileNames.getEvaluatorShimConfigurationName());
     this.configurationSerializer.toFile(shimConfig, shim);
     final URI shimUri = this.uploadFile(shim);
+    TcpPortProvider portProvider = Tang.Factory.getTang().newInjector(shimConfig).getInstance(TcpPortProvider.class);
+    LOG.log(Level.INFO, "portProvider in JobSubmissionHandler is " + portProvider);
     this.azureBatchHelper.submitTask(this.azureBatchHelper.getAzureBatchJobId(), taskId, jarFileUri,
-        shimUri, getEvaluatorShimLaunchCommand());
+        shimUri, getEvaluatorShimLaunchCommand(), portProvider);
   }
 
   private File writeFileResourcesJarFile(final Set<FileResource> fileResourceSet) throws IOException {
