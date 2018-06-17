@@ -26,7 +26,6 @@ import com.microsoft.azure.batch.protocol.models.PoolEndpointConfiguration;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.JsonDecoder;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.commons.lang.StringUtils;
 import org.apache.reef.annotations.audience.Interop;
 import org.apache.reef.reef.bridge.client.avro.AvroAzureBatchJobSubmissionParameters;
 import org.apache.reef.runtime.azbatch.client.AzureBatchRuntimeConfiguration;
@@ -118,9 +117,8 @@ public final class AzureBatchBootstrapREEFLauncher {
         }
       }
 
-      final String ports = StringUtils.join(availablePorts.toArray(), TcpPortList.SEPARATOR);
       if (availablePorts.size() > 0) {
-        launcherConfigBuilder.bindNamedParameter(TcpPortList.class, ports)
+        launcherConfigBuilder.bindList(TcpPortList.class, availablePorts)
             .bindImplementation(TcpPortProvider.class, ListTcpPortProvider.class);
       }
     }
@@ -154,8 +152,11 @@ public final class AzureBatchBootstrapREEFLauncher {
 
   private static Configuration generateConfigurationFromJobSubmissionParameters(
       final AvroAzureBatchJobSubmissionParameters avroAzureBatchJobSubmissionParameters) {
+    Boolean isDockerContainer = avroAzureBatchJobSubmissionParameters.getAzureBatchPoolDriverPortsList().size() > 0;
     return AzureBatchRuntimeConfigurationCreator
-        .getOrCreateAzureBatchRuntimeConfiguration(avroAzureBatchJobSubmissionParameters.getAzureBatchIsWindows())
+        .getOrCreateAzureBatchRuntimeConfiguration(
+            avroAzureBatchJobSubmissionParameters.getAzureBatchIsWindows(),
+            isDockerContainer)
         .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_NAME,
             avroAzureBatchJobSubmissionParameters.getAzureBatchAccountName().toString())
         .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_KEY,
