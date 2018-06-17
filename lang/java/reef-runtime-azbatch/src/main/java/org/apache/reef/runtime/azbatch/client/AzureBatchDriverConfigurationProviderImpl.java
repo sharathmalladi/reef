@@ -27,20 +27,18 @@ import org.apache.reef.runtime.azbatch.util.command.CommandBuilder;
 import org.apache.reef.runtime.common.client.DriverConfigurationProvider;
 import org.apache.reef.runtime.common.parameters.JVMHeapSlack;
 import org.apache.reef.tang.Configuration;
-import org.apache.reef.tang.ConfigurationBuilder;
 import org.apache.reef.tang.Configurations;
 import org.apache.reef.tang.annotations.Parameter;
 import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
 import org.apache.reef.wake.remote.address.ContainerBasedLocalAddressProvider;
 import org.apache.reef.wake.remote.address.LocalAddressProvider;
-import org.apache.reef.wake.remote.ports.ListTcpPortProvider;
+import org.apache.reef.wake.remote.ports.SerialTcpPortProvider;
 import org.apache.reef.wake.remote.ports.TcpPortProvider;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
 
 import javax.inject.Inject;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Configuration provider for the Azure Batch runtime.
@@ -57,10 +55,10 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
   private final String containerRegistryServer;
   private final String containerRegistryUsername;
   private final String containerRegistryPassword;
+  private final Integer tcpPortRangeBegin;
+  private final Integer tcpPortRangeEnd;
   private final CommandBuilder commandBuilder;
-  private final List<String> azureBatchContainerPortList;
   private final Boolean isDockerContainer;
-  private final static String SEPARATOR = ",";
 
   @Inject
   private AzureBatchDriverConfigurationProviderImpl(
@@ -73,7 +71,8 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
       @Parameter(ContainerRegistryServer.class) final String containerRegistryServer,
       @Parameter(ContainerRegistryUsername.class) final String containerRegistryUsername,
       @Parameter(ContainerRegistryPassword.class) final String containerRegistryPassword,
-      @Parameter(AzureBatchContainerPortList.class) final String azureBatchContainerPortList,
+      @Parameter(TcpPortRangeBegin.class) final Integer tcpPortRangeBegin,
+      @Parameter(TcpPortRangeEnd.class) final Integer tcpPortRangeEnd,
       final CommandBuilder commandBuilder) {
     this.jvmSlack = jvmSlack;
     this.azureBatchAccountUri = azureBatchAccountUri;
@@ -84,14 +83,11 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
     this.containerRegistryServer = containerRegistryServer;
     this.containerRegistryUsername = containerRegistryUsername;
     this.containerRegistryPassword = containerRegistryPassword;
+    this.tcpPortRangeBegin = tcpPortRangeBegin;
+    this.tcpPortRangeEnd = tcpPortRangeEnd;
     this.commandBuilder = commandBuilder;
-    this.azureBatchContainerPortList = new ArrayList<>();
-    String[] ports = StringUtils.split(azureBatchContainerPortList, SEPARATOR);
-    for (int i = 0; i < ports.length; i++) {
-      this.azureBatchContainerPortList.add(ports[i]);
-    }
 
-    if (ports.length > 0) {
+    if (!StringUtils.isEmpty(containerRegistryServer)) {
       this.isDockerContainer = true;
     } else {
       this.isDockerContainer = false;
@@ -121,7 +117,7 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
     if (!StringUtils.isEmpty(this.containerRegistryServer)) {
       driverConfigurationBuilder = driverConfigurationBuilder
           .bindImplementation(LocalAddressProvider.class, ContainerBasedLocalAddressProvider.class)
-          .bindImplementation(TcpPortProvider.class, ListTcpPortProvider.class);
+          .bindImplementation(TcpPortProvider.class, SerialTcpPortProvider.class);
     }
 
     Configuration driverConfiguration = driverConfigurationBuilder.build()
@@ -137,7 +133,8 @@ public final class AzureBatchDriverConfigurationProviderImpl implements DriverCo
             .set(AzureBatchDriverConfiguration.CONTAINER_REGISTRY_SERVER, this.containerRegistryServer)
             .set(AzureBatchDriverConfiguration.CONTAINER_REGISTRY_USERNAME, this.containerRegistryUsername)
             .set(AzureBatchDriverConfiguration.CONTAINER_REGISTRY_PASSWORD, this.containerRegistryPassword)
-            .set(AzureBatchDriverConfiguration.AZURE_BATCH_CONTAINER_PORT_LIST, this.azureBatchContainerPortList)
+            .set(AzureBatchDriverConfiguration.TCP_PORT_RANGE_BEGIN, this.tcpPortRangeBegin)
+            .set(AzureBatchDriverConfiguration.TCP_PORT_RANGE_END, this.tcpPortRangeEnd)
             .set(AzureBatchDriverConfiguration.IS_CONTAINER_BASED_POOL, this.isDockerContainer)
             .build();
     return Configurations.merge(driverConfiguration, applicationConfiguration);

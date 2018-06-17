@@ -25,9 +25,8 @@ import org.apache.reef.runtime.azbatch.util.command.LinuxCommandBuilder;
 import org.apache.reef.runtime.azbatch.util.command.WindowsCommandBuilder;
 import org.apache.reef.tang.formats.ConfigurationModule;
 import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
-import org.apache.reef.wake.remote.ports.ListTcpPortProvider;
-import org.apache.reef.wake.remote.ports.TcpPortProvider;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
 
 /**
  * Class that builds the ConfigurationModule for Azure Batch runtime.
@@ -60,10 +59,6 @@ public final class AzureBatchRuntimeConfigurationCreator {
         builder = builder.bindImplementation(CommandBuilder.class, LinuxCommandBuilder.class);
       }
 
-      if (isDockerContainer) {
-        builder = builder.bindImplementation(TcpPortProvider.class, ListTcpPortProvider.class);
-      }
-
       AzureBatchRuntimeConfigurationCreator.conf = new AzureBatchRuntimeConfiguration()
           .merge(builder.build())
           .bindNamedParameter(AzureBatchAccountName.class, AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_NAME)
@@ -75,6 +70,8 @@ public final class AzureBatchRuntimeConfigurationCreator {
           .bindNamedParameter(ContainerRegistryServer.class, AzureBatchRuntimeConfiguration.CONTAINER_REGISTRY_SERVER)
           .bindNamedParameter(ContainerRegistryUsername.class, AzureBatchRuntimeConfiguration.CONTAINER_REGISTRY_USERNAME)
           .bindNamedParameter(ContainerRegistryPassword.class, AzureBatchRuntimeConfiguration.CONTAINER_REGISTRY_PASSWORD)
+          .bindNamedParameter(TcpPortRangeBegin.class, AzureBatchRuntimeConfiguration.TCP_PORT_RANGE_BEGIN)
+          .bindNamedParameter(TcpPortRangeEnd.class, AzureBatchRuntimeConfiguration.TCP_PORT_RANGE_END)
           .bindNamedParameter(
               AzureStorageContainerName.class, AzureBatchRuntimeConfiguration.AZURE_STORAGE_CONTAINER_NAME)
           .build();

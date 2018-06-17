@@ -16,14 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.runtime.azbatch.parameters;
+package org.apache.reef.wake.remote.ports.parameters;
 
 import org.apache.reef.tang.annotations.Name;
 import org.apache.reef.tang.annotations.NamedParameter;
 
 /**
- * The list of ports for Azure Batch containers.
+ * Last tcp port number to try.
  */
-@NamedParameter(doc = "The comma-separated list of ports for Azure Batch containers.", default_value = "2000,2001")
-public final class AzureBatchContainerPortList implements Name<String> {
+@NamedParameter(doc = "Last tcp port number to try")
+public final class TcpPortRangeEnd implements Name<Integer> {
+
+  /**
+   * Empty private constructor to prohibit instantiation of utility class.
+   */
+  private TcpPortRangeEnd() {
+  }
 }

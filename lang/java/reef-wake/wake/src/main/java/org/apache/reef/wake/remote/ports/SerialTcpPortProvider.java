@@ -22,30 +22,35 @@ package org.apache.reef.wake.remote.ports;
 import org.apache.reef.tang.annotations.Parameter;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeTryCount;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A TcpPortProvider which gives out random ports in a range.
+ * A TcpPortProvider which gives out ports in serial order.
  */
-public final class RangeTcpPortProvider implements TcpPortProvider {
+public final class SerialTcpPortProvider implements TcpPortProvider {
   private final int portRangeBegin;
-  private final int portRangeCount;
-  private final int portRangeTryCount;
+  private final int portRangeEnd;
   private static final Logger LOG = Logger.getLogger(RangeTcpPortProvider.class.getName());
+  List<Integer> ports;
 
   @Inject
-  public RangeTcpPortProvider(@Parameter(TcpPortRangeBegin.class) final int portRangeBegin,
-                              @Parameter(TcpPortRangeCount.class) final int portRangeCount,
-                              @Parameter(TcpPortRangeTryCount.class) final int portRangeTryCount) {
+  public SerialTcpPortProvider(@Parameter(TcpPortRangeBegin.class) final int portRangeBegin,
+                              @Parameter(TcpPortRangeEnd.class) final int portRangeEnd) {
     this.portRangeBegin = portRangeBegin;
-    this.portRangeCount = portRangeCount;
-    this.portRangeTryCount = portRangeTryCount;
+    this.portRangeEnd = portRangeEnd;
     LOG.log(Level.INFO, "Instantiating " + this);
+    this.ports = new ArrayList<>();
+    for (Integer i = portRangeBegin; i <= portRangeEnd; i++) {
+      this.ports.add(i);
+    }
   }
 
   /**
@@ -55,15 +60,14 @@ public final class RangeTcpPortProvider implements TcpPortProvider {
    */
   @Override
   public Iterator<Integer> iterator() {
-    return new RandomRangeIterator(portRangeBegin, portRangeCount, portRangeTryCount);
+    return ports.iterator();
   }
 
   @Override
   public String toString() {
     return "RangeTcpPortProvider{" +
         "portRangeBegin=" + portRangeBegin +
-        ", portRangeCount=" + portRangeCount +
-        ", portRangeTryCount=" + portRangeTryCount +
+        ", portRangeEnd=" + portRangeEnd +
         '}';
   }
 }

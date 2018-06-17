@@ -92,6 +92,16 @@ public final class AzureBatchRuntimeConfiguration extends ConfigurationModuleBui
   public static final OptionalParameter<String> CONTAINER_REGISTRY_PASSWORD = new OptionalParameter<>();
 
   /**
+   * Start of port range.
+   */
+  public static final OptionalParameter<Integer> TCP_PORT_RANGE_BEGIN = new OptionalParameter<>();
+
+  /**
+   * port range end.
+   */
+  public static final OptionalParameter<Integer> TCP_PORT_RANGE_END = new OptionalParameter<>();
+
+  /**
    * Create a {@link Configuration} object from an Avro configuration file.
    *
    * @param file the configuration file.

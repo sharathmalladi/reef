@@ -18,19 +18,18 @@
  */
 package org.apache.reef.runtime.azbatch.driver;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.reef.annotations.audience.Private;
 import org.apache.reef.runtime.azbatch.evaluator.EvaluatorShimConfiguration;
 import org.apache.reef.runtime.azbatch.util.batch.AzureBatchHelper;
 import org.apache.reef.runtime.common.utils.RemoteManager;
 import org.apache.reef.tang.Configuration;
-import org.apache.reef.tang.Tang;
-import org.apache.reef.tang.exceptions.InjectionException;
-import org.apache.reef.wake.remote.address.ContainerBasedLocalAddressProvider;
+import org.apache.reef.tang.annotations.Parameter;
 import org.apache.reef.wake.remote.address.LocalAddressProvider;
-import org.apache.reef.wake.remote.ports.ListTcpPortProvider;
 import org.apache.reef.wake.remote.ports.TcpPortProvider;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeTryCount;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -42,20 +41,26 @@ import java.util.ArrayList;
 public class AzureBatchEvaluatorShimConfigurationProvider {
 
   RemoteManager remoteManager;
-  TcpPortProvider portProvider;
   LocalAddressProvider localAddressProvider;
   AzureBatchHelper azureBatchHelper;
+  TcpPortProvider portProvider;
+  private final Integer tcpPortRangeBegin;
+  private final Integer tcpPortRangeEnd;
 
   @Inject
   AzureBatchEvaluatorShimConfigurationProvider(
       final RemoteManager remoteManager,
       final LocalAddressProvider localAddressProvider,
       final AzureBatchHelper azureBatchHelper,
-      final TcpPortProvider portProvider) {
+      final TcpPortProvider portProvider,
+      @Parameter(TcpPortRangeBegin.class) final Integer tcpPortRangeBegin,
+      @Parameter(TcpPortRangeEnd.class) final Integer tcpPortRangeEnd) {
     this.remoteManager = remoteManager;
-    this.portProvider = portProvider;
     this.localAddressProvider = localAddressProvider;
     this.azureBatchHelper = azureBatchHelper;
+    this.portProvider = portProvider;
+    this.tcpPortRangeBegin = tcpPortRangeBegin;
+    this.tcpPortRangeEnd = tcpPortRangeEnd;
   }
 
   /**
@@ -73,6 +78,8 @@ public class AzureBatchEvaluatorShimConfigurationProvider {
         .build()
         .set(EvaluatorShimConfiguration.DRIVER_REMOTE_IDENTIFIER, this.remoteManager.getMyIdentifier())
         .set(EvaluatorShimConfiguration.CONTAINER_IDENTIFIER, containerId)
+        .set(EvaluatorShimConfiguration.TCP_PORT_RANGE_BEGIN, this.tcpPortRangeBegin)
+        .set(EvaluatorShimConfiguration.TCP_PORT_RANGE_END, this.tcpPortRangeEnd)
         .build();
   }
 }

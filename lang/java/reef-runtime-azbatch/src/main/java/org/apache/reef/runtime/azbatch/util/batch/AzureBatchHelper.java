@@ -57,14 +57,12 @@ public final class AzureBatchHelper {
 
   private final BatchClient client;
   private final PoolInformation poolInfo;
-  private final TcpPortProvider portProvider;
   private final ContainerRegistry containerRegistry;
 
   @Inject
   public AzureBatchHelper(
       final AzureBatchFileNames azureBatchFileNames,
       final IAzureBatchCredentialProvider credentialProvider,
-      final TcpPortProvider portProvider,
       @Parameter(ContainerRegistryServer.class) final String containerRegistryServer,
       @Parameter(ContainerRegistryUsername.class) final String containerRegistryUsername,
       @Parameter(ContainerRegistryPassword.class) final String containerRegistryPassword,
@@ -73,7 +71,6 @@ public final class AzureBatchHelper {
 
     this.client = BatchClient.open(credentialProvider.getCredentials());
     this.poolInfo = new PoolInformation().withPoolId(azureBatchPoolId);
-    this.portProvider = portProvider;
     if (!StringUtils.isEmpty(containerRegistryServer)) {
       this.containerRegistry = new ContainerRegistry()
           .withRegistryServer(containerRegistryServer)
@@ -91,10 +88,11 @@ public final class AzureBatchHelper {
    * @param storageContainerSAS     the publicly accessible uri to the job container.
    * @param jobJarUri               the publicly accessible uri to the job jar directory.
    * @param command                 the commandline argument to execute the job.
+   * @param portProvider            the port provider to provide ports for docker container if required.
    * @throws IOException
    */
   public void submitJob(final String applicationId, final String storageContainerSAS, final URI jobJarUri,
-                        final String command) throws IOException {
+                        final String command, final TcpPortProvider portProvider) throws IOException {
     ResourceFile jarResourceFile = new ResourceFile()
         .withBlobSource(jobJarUri.toString())
         .withFilePath(AzureBatchFileNames.getTaskJarFileName());
@@ -113,10 +111,7 @@ public final class AzureBatchHelper {
 
     String portMappings = "";
 
-    Iterator<Integer> iterator = this.portProvider.iterator();
-    while (iterator.hasNext()) {
-      Integer port = iterator.next();
-      System.out.println("iter port is " + port);
+    for (Integer port: portProvider) {
       portMappings += String.format("-p %d:%d ", port, port);
     }
 
@@ -164,10 +159,11 @@ public final class AzureBatchHelper {
    * @param jobJarUri the publicly accessible uri list to the job jar directory.
    * @param confUri   the publicly accessible uri list to the job configuration directory.
    * @param command   the commandline argument to execute the job.
+   * @param portProvider            the port provider to provide ports for docker container if required.
    * @throws IOException
    */
   public void submitTask(final String jobId, final String taskId, final URI jobJarUri,
-                         final URI confUri, final String command)
+                         final URI confUri, final String command, TcpPortProvider portProvider)
       throws IOException {
 
     final List<ResourceFile> resources = new ArrayList<>();
@@ -185,10 +181,7 @@ public final class AzureBatchHelper {
     LOG.log(Level.INFO, "Evaluator task command: " + command);
 
     String portMappings = "";
-    Iterator<Integer> iterator = this.portProvider.iterator();
-    while (iterator.hasNext()) {
-      Integer port = iterator.next();
-      System.out.println("iter port is " + port);
+    for (Integer port: portProvider) {
       portMappings += String.format("-p %d:%d ", port, port);
     }
 
