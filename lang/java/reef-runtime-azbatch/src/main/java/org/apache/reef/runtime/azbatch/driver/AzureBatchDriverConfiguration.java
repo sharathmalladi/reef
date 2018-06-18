@@ -43,7 +43,7 @@ import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
 import org.apache.reef.tang.formats.OptionalParameter;
 import org.apache.reef.tang.formats.RequiredParameter;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
 
 import java.util.List;
 
@@ -121,9 +121,9 @@ public final class AzureBatchDriverConfiguration extends ConfigurationModuleBuil
   public static final OptionalParameter<Integer> TCP_PORT_RANGE_BEGIN = new OptionalParameter<>();
 
   /**
-   * port range end.
+   * Number of ports after Start port range.
    */
-  public static final OptionalParameter<Integer> TCP_PORT_RANGE_END = new OptionalParameter<>();
+  public static final OptionalParameter<Integer> TCP_PORT_RANGE_COUNT = new OptionalParameter<>();
 
   /**
    * The pool is docker container based.
@@ -156,7 +156,7 @@ public final class AzureBatchDriverConfiguration extends ConfigurationModuleBuil
       .bindNamedParameter(ContainerRegistryUsername.class, CONTAINER_REGISTRY_USERNAME)
       .bindNamedParameter(ContainerRegistryPassword.class, CONTAINER_REGISTRY_PASSWORD)
       .bindNamedParameter(TcpPortRangeBegin.class, TCP_PORT_RANGE_BEGIN)
-      .bindNamedParameter(TcpPortRangeEnd.class, TCP_PORT_RANGE_END)
+      .bindNamedParameter(TcpPortRangeCount.class, TCP_PORT_RANGE_COUNT)
 
       // Bind the fields bound in AbstractDriverRuntimeConfiguration
       .bindNamedParameter(JobIdentifier.class, JOB_IDENTIFIER)

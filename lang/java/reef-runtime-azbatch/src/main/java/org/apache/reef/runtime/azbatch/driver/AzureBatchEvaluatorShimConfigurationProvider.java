@@ -28,11 +28,8 @@ import org.apache.reef.wake.remote.address.LocalAddressProvider;
 import org.apache.reef.wake.remote.ports.TcpPortProvider;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeTryCount;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 
 /**
  * Configuration provider for the Azure Batch evaluator shim.
@@ -45,7 +42,7 @@ public class AzureBatchEvaluatorShimConfigurationProvider {
   AzureBatchHelper azureBatchHelper;
   TcpPortProvider portProvider;
   private final Integer tcpPortRangeBegin;
-  private final Integer tcpPortRangeEnd;
+  private final Integer tcpPortRangeCount;
 
   @Inject
   AzureBatchEvaluatorShimConfigurationProvider(
@@ -54,13 +51,13 @@ public class AzureBatchEvaluatorShimConfigurationProvider {
       final AzureBatchHelper azureBatchHelper,
       final TcpPortProvider portProvider,
       @Parameter(TcpPortRangeBegin.class) final Integer tcpPortRangeBegin,
-      @Parameter(TcpPortRangeEnd.class) final Integer tcpPortRangeEnd) {
+      @Parameter(TcpPortRangeCount.class) final Integer tcpPortRangeCount) {
     this.remoteManager = remoteManager;
     this.localAddressProvider = localAddressProvider;
     this.azureBatchHelper = azureBatchHelper;
     this.portProvider = portProvider;
     this.tcpPortRangeBegin = tcpPortRangeBegin;
-    this.tcpPortRangeEnd = tcpPortRangeEnd;
+    this.tcpPortRangeCount = tcpPortRangeCount;
   }
 
   /**
@@ -79,7 +76,7 @@ public class AzureBatchEvaluatorShimConfigurationProvider {
         .set(EvaluatorShimConfiguration.DRIVER_REMOTE_IDENTIFIER, this.remoteManager.getMyIdentifier())
         .set(EvaluatorShimConfiguration.CONTAINER_IDENTIFIER, containerId)
         .set(EvaluatorShimConfiguration.TCP_PORT_RANGE_BEGIN, this.tcpPortRangeBegin)
-        .set(EvaluatorShimConfiguration.TCP_PORT_RANGE_END, this.tcpPortRangeEnd)
+        .set(EvaluatorShimConfiguration.TCP_PORT_RANGE_COUNT, this.tcpPortRangeCount)
         .build();
   }
 }

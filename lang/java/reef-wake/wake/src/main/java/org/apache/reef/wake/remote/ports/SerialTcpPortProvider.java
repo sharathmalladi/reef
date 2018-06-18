@@ -22,34 +22,28 @@ package org.apache.reef.wake.remote.ports;
 import org.apache.reef.tang.annotations.Parameter;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeTryCount;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A TcpPortProvider which gives out ports in serial order.
  */
 public final class SerialTcpPortProvider implements TcpPortProvider {
   private final int portRangeBegin;
-  private final int portRangeEnd;
-  private static final Logger LOG = Logger.getLogger(RangeTcpPortProvider.class.getName());
+  private final int portRangeCount;
   List<Integer> ports;
 
   @Inject
   public SerialTcpPortProvider(@Parameter(TcpPortRangeBegin.class) final int portRangeBegin,
-                              @Parameter(TcpPortRangeEnd.class) final int portRangeEnd) {
+                              @Parameter(TcpPortRangeCount.class) final int portRangeCount) {
     this.portRangeBegin = portRangeBegin;
-    this.portRangeEnd = portRangeEnd;
-    LOG.log(Level.INFO, "Instantiating " + this);
+    this.portRangeCount = portRangeCount;
     this.ports = new ArrayList<>();
-    for (Integer i = portRangeBegin; i <= portRangeEnd; i++) {
-      this.ports.add(i);
+    for (Integer i = 0; i < this.portRangeCount; i++) {
+      this.ports.add(this.portRangeBegin + i);
     }
   }
 
@@ -65,9 +59,9 @@ public final class SerialTcpPortProvider implements TcpPortProvider {
 
   @Override
   public String toString() {
-    return "RangeTcpPortProvider{" +
+    return "SerialTcpPortProvider{" +
         "portRangeBegin=" + portRangeBegin +
-        ", portRangeEnd=" + portRangeEnd +
+        ", portRangeCount=" + portRangeCount +
         '}';
   }
 }

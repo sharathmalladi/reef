@@ -25,12 +25,8 @@ import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.annotations.Parameter;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeTryCount;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Class that provides the runtime configuration for Azure Batch.
@@ -48,10 +44,9 @@ public final class AzureBatchRuntimeConfigurationProvider {
   private final String containerRegistryUsername;
   private final String containerRegistryPassword;
   private final Integer tcpPortRangeBegin;
-  private final Integer tcpPortRangeEnd;
+  private final Integer tcpPortRangeCount;
   private final Boolean isWindows;
   private final Boolean isDockerContainer;
-  private final static String SEPARATOR = ",";
 
   /**
    * Private constructor.
@@ -69,7 +64,7 @@ public final class AzureBatchRuntimeConfigurationProvider {
       @Parameter(ContainerRegistryUsername.class) final String containerRegistryUsername,
       @Parameter(ContainerRegistryPassword.class) final String containerRegistryPassword,
       @Parameter(TcpPortRangeBegin.class) final Integer tcpPortRangeBegin,
-      @Parameter(TcpPortRangeEnd.class) final Integer tcpPortRangeEnd,
+      @Parameter(TcpPortRangeCount.class) final Integer tcpPortRangeCount,
       @Parameter(IsWindows.class) final Boolean isWindows) {
     this.azureBatchAccountName = azureBatchAccountName;
     this.azureBatchAccountKey = azureBatchAccountKey;
@@ -82,7 +77,7 @@ public final class AzureBatchRuntimeConfigurationProvider {
     this.containerRegistryUsername = containerRegistryUsername;
     this.containerRegistryPassword = containerRegistryPassword;
     this.tcpPortRangeBegin = tcpPortRangeBegin;
-    this.tcpPortRangeEnd = tcpPortRangeEnd;
+    this.tcpPortRangeCount = tcpPortRangeCount;
     this.isWindows = isWindows;
 
     if (!StringUtils.isEmpty(this.containerRegistryServer)) {
@@ -106,7 +101,7 @@ public final class AzureBatchRuntimeConfigurationProvider {
             .set(AzureBatchRuntimeConfiguration.CONTAINER_REGISTRY_USERNAME, this.containerRegistryUsername)
             .set(AzureBatchRuntimeConfiguration.CONTAINER_REGISTRY_PASSWORD, this.containerRegistryPassword)
             .set(AzureBatchRuntimeConfiguration.TCP_PORT_RANGE_BEGIN, this.tcpPortRangeBegin)
-            .set(AzureBatchRuntimeConfiguration.TCP_PORT_RANGE_END, this.tcpPortRangeEnd)
+            .set(AzureBatchRuntimeConfiguration.TCP_PORT_RANGE_COUNT, this.tcpPortRangeCount)
             .build();
   }
 }

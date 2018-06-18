@@ -97,9 +97,9 @@ public final class AzureBatchRuntimeConfiguration extends ConfigurationModuleBui
   public static final OptionalParameter<Integer> TCP_PORT_RANGE_BEGIN = new OptionalParameter<>();
 
   /**
-   * port range end.
+   * Number of ports after start of begin port.
    */
-  public static final OptionalParameter<Integer> TCP_PORT_RANGE_END = new OptionalParameter<>();
+  public static final OptionalParameter<Integer> TCP_PORT_RANGE_COUNT = new OptionalParameter<>();
 
   /**
    * Create a {@link Configuration} object from an Avro configuration file.

@@ -20,7 +20,6 @@ package org.apache.reef.runtime.azbatch.evaluator;
 
 import org.apache.reef.annotations.audience.EvaluatorSide;
 import org.apache.reef.annotations.audience.Private;
-import org.apache.reef.runtime.azbatch.client.AzureBatchRuntimeConfiguration;
 import org.apache.reef.runtime.azbatch.parameters.ContainerIdentifier;
 import org.apache.reef.runtime.common.evaluator.parameters.DriverRemoteIdentifier;
 import org.apache.reef.runtime.common.launch.REEFMessageCodec;
@@ -31,8 +30,6 @@ import org.apache.reef.tang.formats.RequiredParameter;
 import org.apache.reef.wake.remote.RemoteConfiguration;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeEnd;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeTryCount;
 
 /**
  * ConfigurationModule to create evaluator shim configurations.
@@ -57,9 +54,9 @@ public final class EvaluatorShimConfiguration extends ConfigurationModuleBuilder
   public static final OptionalParameter<Integer> TCP_PORT_RANGE_BEGIN = new OptionalParameter<>();
 
   /**
-   * End of port range.
+   * Number of ports after start of begin port.
    */
-  public static final OptionalParameter<Integer> TCP_PORT_RANGE_END = new OptionalParameter<>();
+  public static final OptionalParameter<Integer> TCP_PORT_RANGE_COUNT = new OptionalParameter<>();
 
 
   public static final ConfigurationModule CONF = new EvaluatorShimConfiguration()
@@ -67,6 +64,6 @@ public final class EvaluatorShimConfiguration extends ConfigurationModuleBuilder
       .bindNamedParameter(DriverRemoteIdentifier.class, DRIVER_REMOTE_IDENTIFIER)
       .bindNamedParameter(ContainerIdentifier.class, CONTAINER_IDENTIFIER)
       .bindNamedParameter(TcpPortRangeBegin.class, TCP_PORT_RANGE_BEGIN)
-      .bindNamedParameter(TcpPortRangeEnd.class, TCP_PORT_RANGE_END)
+      .bindNamedParameter(TcpPortRangeCount.class, TCP_PORT_RANGE_COUNT)
       .build();
 }
