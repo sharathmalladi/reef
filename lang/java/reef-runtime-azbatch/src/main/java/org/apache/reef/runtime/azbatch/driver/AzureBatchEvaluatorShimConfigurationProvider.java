@@ -20,8 +20,14 @@ package org.apache.reef.runtime.azbatch.driver;
 
 import org.apache.reef.annotations.audience.Private;
 import org.apache.reef.runtime.azbatch.evaluator.EvaluatorShimConfiguration;
+import org.apache.reef.runtime.azbatch.util.batch.AzureBatchHelper;
 import org.apache.reef.runtime.common.utils.RemoteManager;
 import org.apache.reef.tang.Configuration;
+import org.apache.reef.tang.annotations.Parameter;
+import org.apache.reef.wake.remote.address.LocalAddressProvider;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
 
 import javax.inject.Inject;
 
@@ -31,24 +37,46 @@ import javax.inject.Inject;
 @Private
 public class AzureBatchEvaluatorShimConfigurationProvider {
 
-  private final RemoteManager remoteManager;
+  RemoteManager remoteManager;
+  LocalAddressProvider localAddressProvider;
+  AzureBatchHelper azureBatchHelper;
+  TcpPortProvider portProvider;
+  private final Integer tcpPortRangeBegin;
+  private final Integer tcpPortRangeCount;
 
   @Inject
-  AzureBatchEvaluatorShimConfigurationProvider(final RemoteManager remoteManager) {
+  AzureBatchEvaluatorShimConfigurationProvider(
+      final RemoteManager remoteManager,
+      final LocalAddressProvider localAddressProvider,
+      final AzureBatchHelper azureBatchHelper,
+      final TcpPortProvider portProvider,
+      @Parameter(TcpPortRangeBegin.class) final Integer tcpPortRangeBegin,
+      @Parameter(TcpPortRangeCount.class) final Integer tcpPortRangeCount) {
     this.remoteManager = remoteManager;
+    this.localAddressProvider = localAddressProvider;
+    this.azureBatchHelper = azureBatchHelper;
+    this.portProvider = portProvider;
+    this.tcpPortRangeBegin = tcpPortRangeBegin;
+    this.tcpPortRangeCount = tcpPortRangeCount;
   }
 
   /**
    * Constructs a {@link Configuration} object which will be serialized and written to shim.config and
    * used to launch the evaluator shim.
    *
-   * @param containerId id of the container for which the shim is being launched.
+   * @param containerId      id of the container for which the shim is being launched.
    * @return A {@link Configuration} object needed to launch the evaluator shim.
    */
   public Configuration getConfiguration(final String containerId) {
-    return EvaluatorShimConfiguration.CONF
+
+    return EvaluatorShimConfiguration.CONF.getBuilder()
+        .bindImplementation(LocalAddressProvider.class, this.localAddressProvider.getClass())
+        .bindImplementation(TcpPortProvider.class, this.portProvider.getClass())
+        .build()
         .set(EvaluatorShimConfiguration.DRIVER_REMOTE_IDENTIFIER, this.remoteManager.getMyIdentifier())
         .set(EvaluatorShimConfiguration.CONTAINER_IDENTIFIER, containerId)
+        .set(EvaluatorShimConfiguration.TCP_PORT_RANGE_BEGIN, this.tcpPortRangeBegin)
+        .set(EvaluatorShimConfiguration.TCP_PORT_RANGE_COUNT, this.tcpPortRangeCount)
         .build();
   }
 }

@@ -28,6 +28,9 @@ import org.apache.reef.runtime.common.client.api.JobSubmissionEvent;
 import org.apache.reef.runtime.common.client.api.JobSubmissionHandler;
 import org.apache.reef.runtime.common.files.JobJarMaker;
 import org.apache.reef.tang.Configuration;
+import org.apache.reef.tang.Tang;
+import org.apache.reef.tang.exceptions.InjectionException;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -129,9 +132,11 @@ public final class AzureBatchJobSubmissionHandler implements JobSubmissionHandle
       LOG.log(Level.FINE, "Assembling application submission.");
       final String command = this.launchCommandBuilder.buildDriverCommand(jobSubmissionEvent);
 
-      this.azureBatchHelper.submitJob(getApplicationId(), storageContainerSAS, jobJarSasUri, command);
+      TcpPortProvider portProvider = Tang.Factory.getTang().newInjector(driverConfiguration).getInstance(TcpPortProvider.class);
+      LOG.log(Level.INFO, "portProvider in JobSubmissionHandler is " + portProvider);
+      this.azureBatchHelper.submitJob(getApplicationId(), storageContainerSAS, jobJarSasUri, command, portProvider);
 
-    } catch (final IOException e) {
+    } catch (final IOException | InjectionException e) {
       LOG.log(Level.SEVERE, "Error submitting Azure Batch request: {0}", e);
       throw new RuntimeException(e);
     }

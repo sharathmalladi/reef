@@ -25,8 +25,11 @@ import org.apache.reef.runtime.common.evaluator.parameters.DriverRemoteIdentifie
 import org.apache.reef.runtime.common.launch.REEFMessageCodec;
 import org.apache.reef.tang.formats.ConfigurationModule;
 import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
+import org.apache.reef.tang.formats.OptionalParameter;
 import org.apache.reef.tang.formats.RequiredParameter;
 import org.apache.reef.wake.remote.RemoteConfiguration;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
 
 /**
  * ConfigurationModule to create evaluator shim configurations.
@@ -45,9 +48,22 @@ public final class EvaluatorShimConfiguration extends ConfigurationModuleBuilder
    */
   public static final RequiredParameter<String> CONTAINER_IDENTIFIER = new RequiredParameter<>();
 
+  /**
+   * Start of port range.
+   */
+  public static final OptionalParameter<Integer> TCP_PORT_RANGE_BEGIN = new OptionalParameter<>();
+
+  /**
+   * Number of ports after start of begin port.
+   */
+  public static final OptionalParameter<Integer> TCP_PORT_RANGE_COUNT = new OptionalParameter<>();
+
+
   public static final ConfigurationModule CONF = new EvaluatorShimConfiguration()
       .bindNamedParameter(RemoteConfiguration.MessageCodec.class, REEFMessageCodec.class)
       .bindNamedParameter(DriverRemoteIdentifier.class, DRIVER_REMOTE_IDENTIFIER)
       .bindNamedParameter(ContainerIdentifier.class, CONTAINER_IDENTIFIER)
+      .bindNamedParameter(TcpPortRangeBegin.class, TCP_PORT_RANGE_BEGIN)
+      .bindNamedParameter(TcpPortRangeCount.class, TCP_PORT_RANGE_COUNT)
       .build();
 }

@@ -21,17 +21,22 @@ package org.apache.reef.runtime.azbatch.util.batch;
 import com.microsoft.azure.batch.BatchClient;
 import com.microsoft.azure.batch.protocol.models.*;
 
-import org.apache.reef.runtime.azbatch.client.AzureBatchJobSubmissionHandler;
+import org.apache.commons.lang.StringUtils;
 import org.apache.reef.runtime.azbatch.parameters.AzureBatchPoolId;
+import org.apache.reef.runtime.azbatch.parameters.ContainerRegistryPassword;
+import org.apache.reef.runtime.azbatch.parameters.ContainerRegistryServer;
+import org.apache.reef.runtime.azbatch.parameters.ContainerRegistryUsername;
 import org.apache.reef.runtime.azbatch.util.AzureBatchFileNames;
 import org.apache.reef.runtime.azbatch.util.storage.SharedAccessSignatureCloudBlobClientProvider;
 import org.apache.reef.tang.annotations.Parameter;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,7 +46,7 @@ import java.util.logging.Logger;
  */
 public final class AzureBatchHelper {
 
-  private static final Logger LOG = Logger.getLogger(AzureBatchJobSubmissionHandler.class.getName());
+  private static final Logger LOG = Logger.getLogger(AzureBatchHelper.class.getName());
 
   /*
    * Environment variable that contains the Azure Batch jobId.
@@ -52,16 +57,28 @@ public final class AzureBatchHelper {
 
   private final BatchClient client;
   private final PoolInformation poolInfo;
+  private final ContainerRegistry containerRegistry;
 
   @Inject
   public AzureBatchHelper(
       final AzureBatchFileNames azureBatchFileNames,
       final IAzureBatchCredentialProvider credentialProvider,
+      @Parameter(ContainerRegistryServer.class) final String containerRegistryServer,
+      @Parameter(ContainerRegistryUsername.class) final String containerRegistryUsername,
+      @Parameter(ContainerRegistryPassword.class) final String containerRegistryPassword,
       @Parameter(AzureBatchPoolId.class) final String azureBatchPoolId) {
     this.azureBatchFileNames = azureBatchFileNames;
 
     this.client = BatchClient.open(credentialProvider.getCredentials());
     this.poolInfo = new PoolInformation().withPoolId(azureBatchPoolId);
+    if (!StringUtils.isEmpty(containerRegistryServer)) {
+      this.containerRegistry = new ContainerRegistry()
+          .withRegistryServer(containerRegistryServer)
+          .withUserName(containerRegistryUsername)
+          .withPassword(containerRegistryPassword);
+    } else {
+      this.containerRegistry = null;
+    }
   }
 
   /**
@@ -71,10 +88,11 @@ public final class AzureBatchHelper {
    * @param storageContainerSAS     the publicly accessible uri to the job container.
    * @param jobJarUri               the publicly accessible uri to the job jar directory.
    * @param command                 the commandline argument to execute the job.
+   * @param portProvider            the port provider to provide ports for docker container if required.
    * @throws IOException
    */
   public void submitJob(final String applicationId, final String storageContainerSAS, final URI jobJarUri,
-                        final String command) throws IOException {
+                        final String command, final TcpPortProvider portProvider) throws IOException {
     ResourceFile jarResourceFile = new ResourceFile()
         .withBlobSource(jobJarUri.toString())
         .withFilePath(AzureBatchFileNames.getTaskJarFileName());
@@ -90,12 +108,36 @@ public final class AzureBatchHelper {
         .withName(SharedAccessSignatureCloudBlobClientProvider.AZURE_STORAGE_CONTAINER_SAS_TOKEN_ENV)
         .withValue(storageContainerSAS);
 
+
+    String portMappings = "";
+
+    for (Integer port: portProvider) {
+      portMappings += String.format("-p %d:%d ", port, port);
+    }
+
+    TaskContainerSettings containerSettings = null;
+    JobPreparationTask jobPreparationTask = null;
+    if (this.containerRegistry != null) {
+      containerSettings = new TaskContainerSettings()
+          .withRegistry(this.containerRegistry)
+          .withImageName("sharathmcontainerreg.azurecr.io/ubuntuwithjdk")
+          .withContainerRunOptions("-dit --env HOST_IP_ADDR_PATH=$AZ_BATCH_JOB_PREP_DIR/hostip.txt " + portMappings);
+      String captureIpAddressCommandLine =
+          "/bin/bash -c \"rm -f $AZ_BATCH_JOB_PREP_DIR/hostip.txt;" +
+              " echo `hostname -i` > $AZ_BATCH_JOB_PREP_DIR/hostip.txt\"";
+      jobPreparationTask = new JobPreparationTask()
+          .withId("CaptureHostIpAddress")
+          .withCommandLine(captureIpAddressCommandLine);
+    }
+
     JobManagerTask jobManagerTask = new JobManagerTask()
         .withRunExclusive(false)
         .withId(applicationId)
         .withResourceFiles(Collections.singletonList(jarResourceFile))
         .withEnvironmentSettings(Collections.singletonList(environmentSetting))
         .withAuthenticationTokenSettings(authenticationTokenSettings)
+        .withKillJobOnCompletion(false)
+        .withContainerSettings(containerSettings)
         .withCommandLine(command);
 
     LOG.log(Level.INFO, "Job Manager (aka driver) task command: " + command);
@@ -103,6 +145,7 @@ public final class AzureBatchHelper {
     JobAddParameter jobAddParameter = new JobAddParameter()
         .withId(applicationId)
         .withJobManagerTask(jobManagerTask)
+        .withJobPreparationTask(jobPreparationTask)
         .withPoolInfo(poolInfo);
 
     client.jobOperations().createJob(jobAddParameter);
@@ -116,10 +159,11 @@ public final class AzureBatchHelper {
    * @param jobJarUri the publicly accessible uri list to the job jar directory.
    * @param confUri   the publicly accessible uri list to the job configuration directory.
    * @param command   the commandline argument to execute the job.
+   * @param portProvider            the port provider to provide ports for docker container if required.
    * @throws IOException
    */
   public void submitTask(final String jobId, final String taskId, final URI jobJarUri,
-                         final URI confUri, final String command)
+                         final URI confUri, final String command, TcpPortProvider portProvider)
       throws IOException {
 
     final List<ResourceFile> resources = new ArrayList<>();
@@ -136,9 +180,23 @@ public final class AzureBatchHelper {
 
     LOG.log(Level.INFO, "Evaluator task command: " + command);
 
+    String portMappings = "";
+    for (Integer port: portProvider) {
+      portMappings += String.format("-p %d:%d ", port, port);
+    }
+
+    TaskContainerSettings containerSettings = null;
+    if (this.containerRegistry != null) {
+      containerSettings = new TaskContainerSettings()
+          .withRegistry(this.containerRegistry)
+          .withImageName("sharathmcontainerreg.azurecr.io/ubuntuwithjdk")
+          .withContainerRunOptions("--env HOST_IP_ADDR_PATH=$AZ_BATCH_JOB_PREP_DIR/hostip.txt " + portMappings);
+    }
+
     final TaskAddParameter taskAddParameter = new TaskAddParameter()
         .withId(taskId)
         .withResourceFiles(resources)
+        .withContainerSettings(containerSettings)
         .withCommandLine(command);
 
     this.client.taskOperations().createTask(jobId, taskAddParameter);

@@ -19,33 +19,28 @@
 package org.apache.reef.wake.remote.ports;
 
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.reef.tang.annotations.Parameter;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
-import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeTryCount;
+import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
 
 import javax.inject.Inject;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * A TcpPortProvider which gives out random ports in a range.
  */
-public final class RangeTcpPortProvider implements TcpPortProvider {
-  private final int portRangeBegin;
-  private final int portRangeCount;
-  private final int portRangeTryCount;
-  private static final Logger LOG = Logger.getLogger(RangeTcpPortProvider.class.getName());
+public final class ListTcpPortProvider implements TcpPortProvider {
+
+  private static final Logger LOG = Logger.getLogger(ListTcpPortProvider.class.getName());
+  private final List<Integer> tcpPortList;
 
   @Inject
-  public RangeTcpPortProvider(@Parameter(TcpPortRangeBegin.class) final int portRangeBegin,
-                              @Parameter(TcpPortRangeCount.class) final int portRangeCount,
-                              @Parameter(TcpPortRangeTryCount.class) final int portRangeTryCount) {
-    this.portRangeBegin = portRangeBegin;
-    this.portRangeCount = portRangeCount;
-    this.portRangeTryCount = portRangeTryCount;
-    LOG.log(Level.INFO, "Instantiating " + this);
+  public ListTcpPortProvider(@Parameter(TcpPortList.class) final List<Integer> tcpPortList) {
+    this.tcpPortList = tcpPortList;
+    LOG.log(Level.FINE, "Instantiating " + this);
   }
 
   /**
@@ -55,15 +50,11 @@ public final class RangeTcpPortProvider implements TcpPortProvider {
    */
   @Override
   public Iterator<Integer> iterator() {
-    return new RandomRangeIterator(portRangeBegin, portRangeCount, portRangeTryCount);
+    return this.tcpPortList.iterator();
   }
 
   @Override
   public String toString() {
-    return "RangeTcpPortProvider{" +
-        "portRangeBegin=" + portRangeBegin +
-        ", portRangeCount=" + portRangeCount +
-        ", portRangeTryCount=" + portRangeTryCount +
-        '}';
+    return "ListTcpPortProvider{" + StringUtils.join(this.tcpPortList, ',') + '}';
   }
 }
