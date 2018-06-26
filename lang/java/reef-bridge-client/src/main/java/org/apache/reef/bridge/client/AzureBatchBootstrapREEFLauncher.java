@@ -141,13 +141,12 @@ public final class AzureBatchBootstrapREEFLauncher {
 
   private static Configuration generateConfiguration(
       final AvroAzureBatchJobSubmissionParameters avroAzureBatchJobSubmissionParameters) {
-    // TODO: Sharath - change this before creating pull request
-    Boolean isDockerContainer = avroAzureBatchJobSubmissionParameters.getAzureBatchPoolDriverPortsList().size() > 0;
-    return AzureBatchRuntimeConfigurationCreator
-        .getOrCreateAzureBatchRuntimeConfiguration(
-            avroAzureBatchJobSubmissionParameters.getAzureBatchIsWindows(),
-            isDockerContainer)
-        .set(AzureBatchRuntimeConfiguration.AZURE_BATCH_ACCOUNT_NAME,
+    return TANG.newConfigurationBuilder()
+        .bindImplementation(DriverConfigurationProvider.class, AzureBatchDriverConfigurationProviderImpl.class)
+        .bindImplementation(RuntimeClasspathProvider.class, AzureBatchClasspathProvider.class)
+        .bindImplementation(RuntimePathProvider.class, AzureBatchJVMPathProvider.class)
+        .bindImplementation(CommandBuilder.class, WindowsCommandBuilder.class)
+        .bindNamedParameter(AzureBatchAccountName.class,
             avroAzureBatchJobSubmissionParameters.getAzureBatchAccountName().toString())
         .bindNamedParameter(AzureBatchAccountUri.class,
             avroAzureBatchJobSubmissionParameters.getAzureBatchAccountUri().toString())
