@@ -32,12 +32,15 @@ import org.apache.reef.wake.remote.transport.Transport;
 import org.apache.reef.wake.remote.transport.TransportFactory;
 
 import javax.inject.Inject;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Factory that creates a messaging transport.
  */
 public final class MessagingTransportFactory implements TransportFactory {
 
+  private static final Logger LOG = Logger.getLogger(MessagingTransportFactory.class.getName());
   private final String localAddress;
 
   @Inject
@@ -121,6 +124,8 @@ public final class MessagingTransportFactory implements TransportFactory {
                                final int retryTimeout,
                                final TcpPortProvider tcpPortProvider) {
 
+    LOG.log(Level.INFO, "hostAddress is " + hostAddress);
+    LOG.log(Level.INFO, "tcpPortProvider is " + tcpPortProvider.getClass().getName());
     final Injector injector = Tang.Factory.getTang().newInjector();
     injector.bindVolatileParameter(RemoteConfiguration.HostAddress.class, hostAddress);
     injector.bindVolatileParameter(RemoteConfiguration.Port.class, port);
@@ -130,6 +135,8 @@ public final class MessagingTransportFactory implements TransportFactory {
     injector.bindVolatileParameter(RemoteConfiguration.RetryTimeout.class, retryTimeout);
     injector.bindVolatileInstance(TcpPortProvider.class, tcpPortProvider);
     try {
+      LOG.log(Level.INFO,
+          "default injector is " + injector.getInstance(LocalAddressProvider.class).getClass().getName());
       return injector.getInstance(NettyMessagingTransport.class);
     } catch (final InjectionException e) {
       throw new RuntimeException(e);

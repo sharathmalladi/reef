@@ -65,7 +65,9 @@ public final class NetworkTransport {
       final ProtocolSerializer serializer,
       final InjectionFuture<MultiObserver> observer) {
 
-    LOG.log(Level.FINE, "Java bridge network initializing");
+    LOG.log(Level.INFO, "Java bridge network initializing");
+    LOG.log(Level.INFO, "NetworkTransport:localAddressProvider is " + localAddressProvider.getClass().getName());
+    LOG.log(Level.INFO, "NetworkTransport:localAddressProvider is " + localAddressProvider.getLocalAddress());
 
     this.serializer = serializer;
     this.messageObserver = observer;

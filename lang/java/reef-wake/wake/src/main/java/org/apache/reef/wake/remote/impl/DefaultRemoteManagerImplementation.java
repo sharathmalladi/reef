@@ -83,6 +83,7 @@ public final class DefaultRemoteManagerImplementation implements RemoteManager {
         final TransportFactory tpFactory,
         final TcpPortProvider tcpPortProvider) {
 
+    LOG.log(Level.INFO, "DefaultRemoteManagerImplementation injector: hostAddress is " + hostAddress);
     this.name = name;
     this.handlerContainer = new HandlerContainer<>(name, codec);
 
@@ -95,7 +96,9 @@ public final class DefaultRemoteManagerImplementation implements RemoteManager {
 
     this.handlerContainer.setTransport(this.transport);
 
-    InetSocketAddress address = new InetSocketAddress(localAddressProvider.getLocalAddress(), this.transport.getListeningPort());
+    InetSocketAddress address = new InetSocketAddress(
+        localAddressProvider.getLocalAddress(),
+        this.transport.getListeningPort());
     this.myIdentifier = new SocketRemoteIdentifier(address);
 
     this.reSendStage = new RemoteSenderStage(codec, this.transport, 10);
@@ -104,7 +107,7 @@ public final class DefaultRemoteManagerImplementation implements RemoteManager {
 
     final int counter = COUNTER.incrementAndGet();
 
-    LOG.log(Level.FINEST,
+    LOG.log(Level.INFO,
         "RemoteManager {0} instantiated id {1} counter {2} listening on {3} Binding address provided by {4}",
         new Object[] {this.name, this.myIdentifier, counter, this.transport.getLocalAddress(), localAddressProvider});
   }

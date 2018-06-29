@@ -28,10 +28,13 @@ import org.apache.reef.tang.annotations.Parameter;
 import org.apache.reef.tang.exceptions.BindException;
 import org.apache.reef.tang.exceptions.InjectionException;
 import org.apache.reef.tang.formats.ConfigurationSerializer;
+import org.apache.reef.tang.implementation.InjectionPlan;
+import org.apache.reef.tang.implementation.java.InjectorImpl;
 import org.apache.reef.util.EnvironmentUtils;
 import org.apache.reef.util.ThreadLogger;
 import org.apache.reef.util.logging.LoggingSetup;
 import org.apache.reef.wake.remote.RemoteConfiguration;
+import org.apache.reef.wake.remote.address.LocalAddressProvider;
 import org.apache.reef.wake.time.Clock;
 
 import javax.inject.Inject;
@@ -176,6 +179,11 @@ public final class REEFLauncher {
     final REEFLauncher launcher = getREEFLauncher(args[0]);
 
     Thread.setDefaultUncaughtExceptionHandler(new REEFUncaughtExceptionHandler(launcher.envConfig));
+
+    InjectorImpl injector = (InjectorImpl)Tang.Factory.getTang().newInjector(launcher.envConfig);
+    InjectionPlan<LocalAddressProvider> ip = injector.getInjectionPlan(LocalAddressProvider.class);
+    LOG.log(Level.INFO, "injector plan for ip is " + ip.toPrettyString());
+    LOG.log(Level.INFO, "Number of plans:" + ip.getNumAlternatives());
 
     try (final REEFEnvironment reef = REEFEnvironment.fromConfiguration(launcher.envConfig)) {
       reef.run();

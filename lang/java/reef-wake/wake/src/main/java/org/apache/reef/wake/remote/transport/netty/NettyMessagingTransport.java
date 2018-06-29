@@ -126,6 +126,9 @@ public final class NettyMessagingTransport implements Transport {
 
     final String host = UNKNOWN_HOST_NAME.equals(hostAddress) ? localAddressProvider.getLocalAddress() : hostAddress;
 
+    LOG.log(Level.INFO, "NettyMessagingTransport:localAddressProvider is " + localAddressProvider.getClass().getName());
+    LOG.log(Level.INFO, "NettyMessagingTransport:localAddressProvider is " + localAddressProvider.getLocalAddress());
+    LOG.log(Level.INFO, "NettyMessagingTransport:hostAddress is " + hostAddress);
     this.numberOfTries = numberOfTries;
     this.retryTimeout = retryTimeout;
     this.clientEventListener = new NettyClientEventListener(this.addrToLinkRefMap, clientStage);
@@ -155,7 +158,7 @@ public final class NettyMessagingTransport implements Transport {
         .option(ChannelOption.SO_REUSEADDR, true)
         .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-    LOG.log(Level.FINE, "Binding to {0}:{1}", new Object[] {host, listenPort});
+    LOG.log(Level.INFO, "Binding to {0}:{1}", new Object[] {host, listenPort});
 
     try {
       if (listenPort > 0) {
@@ -165,7 +168,7 @@ public final class NettyMessagingTransport implements Transport {
         InetSocketAddress socketAddr = null;
         Channel acceptorFound = null;
         for (int port : tcpPortProvider) {
-          LOG.log(Level.FINEST, "Try port {0}", port);
+          LOG.log(Level.INFO, "Try port {0}", port);
           try {
             socketAddr = new InetSocketAddress(host, port);
             acceptorFound = serverBootstrap.bind(socketAddr).sync().channel();

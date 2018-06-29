@@ -28,12 +28,15 @@ import org.apache.reef.wake.remote.ports.TcpPortProvider;
 import org.apache.reef.wake.remote.transport.TransportFactory;
 
 import javax.inject.Inject;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Default implementation of RemoteManagerFactory.
  */
 final class DefaultRemoteManagerFactory implements RemoteManagerFactory {
 
+  private static final Logger LOG = Logger.getLogger(DefaultRemoteManagerFactory.class.getName());
   private final Injector injector = Tang.Factory.getTang().newInjector();
 
   private final Codec<?> codec;
@@ -56,6 +59,9 @@ final class DefaultRemoteManagerFactory implements RemoteManagerFactory {
       final TransportFactory tpFactory,
       final TcpPortProvider tcpPortProvider) {
 
+    LOG.log(Level.INFO, "DefaultRemoteManagerFactory is injected");
+    LOG.log(Level.INFO, "localAddressProvider is " + localAddressProvider.getLocalAddress());
+    LOG.log(Level.INFO, "localAddressProvider is " + localAddressProvider.getClass().getName());
     this.codec = codec;
     this.errorHandler = errorHandler;
     this.orderingGuarantee = orderingGuarantee;
@@ -68,7 +74,7 @@ final class DefaultRemoteManagerFactory implements RemoteManagerFactory {
 
   @Override
   public RemoteManager getInstance(final String newRmName) {
-    return getInstance(newRmName, 0, this.codec, this.errorHandler);
+    return getInstance(newRmName + "1", 0, this.codec, this.errorHandler);
   }
 
   @Override
@@ -76,7 +82,7 @@ final class DefaultRemoteManagerFactory implements RemoteManagerFactory {
                                        final String newHostAddress,
                                        final int newListeningPort,
                                        final Codec<T> newCodec) {
-    return getInstance(newRmName, newHostAddress, newListeningPort, newCodec,
+    return getInstance(newRmName + "2", newHostAddress, newListeningPort, newCodec,
         this.errorHandler, this.orderingGuarantee, this.numberOfTries, this.retryTimeout,
         this.localAddressProvider, this.tcpPortProvider);
   }
@@ -90,7 +96,7 @@ final class DefaultRemoteManagerFactory implements RemoteManagerFactory {
                                        final boolean newOrderingGuarantee,
                                        final int newNumberOfTries,
                                        final int newRetryTimeout) {
-    return getInstance(newRmName, newHostAddress, newListeningPort, newCodec, newErrorHandler,
+    return getInstance(newRmName + "3", newHostAddress, newListeningPort, newCodec, newErrorHandler,
         newOrderingGuarantee, newNumberOfTries, newRetryTimeout, this.localAddressProvider, this.tcpPortProvider);
   }
 
@@ -98,7 +104,7 @@ final class DefaultRemoteManagerFactory implements RemoteManagerFactory {
   public <T> RemoteManager getInstance(final String newRmName,
                                        final Codec<T> newCodec,
                                        final EventHandler<Throwable> newErrorHandler) {
-    return getInstance(newRmName, 0, newCodec, newErrorHandler);
+    return getInstance(newRmName + "4", 0, newCodec, newErrorHandler);
   }
 
   @Override
@@ -106,7 +112,7 @@ final class DefaultRemoteManagerFactory implements RemoteManagerFactory {
                                        final int newListeningPort,
                                        final Codec<T> newCodec,
                                        final EventHandler<Throwable> newErrorHandler) {
-    return getInstance(newRmName, null, newListeningPort, newCodec, newErrorHandler, this.orderingGuarantee,
+    return getInstance(newRmName + "5", null, newListeningPort, newCodec, newErrorHandler, this.orderingGuarantee,
         this.numberOfTries, this.retryTimeout, this.localAddressProvider, this.tcpPortProvider);
   }
 
@@ -123,6 +129,10 @@ final class DefaultRemoteManagerFactory implements RemoteManagerFactory {
                                        final TcpPortProvider newTcpPortProvider) {
     try {
 
+      LOG.log(Level.INFO, "RMName is " + newRmName);
+      LOG.log(Level.INFO, "newHostAddress is " + newHostAddress);
+      LOG.log(Level.INFO, "newLocalAddressProvider is " + newLocalAddressProvider.getClass().getName());
+      LOG.log(Level.INFO, "newLocalAddressProvider.LocalAddress is " + newLocalAddressProvider.getLocalAddress());
       final Injector newInjector = injector.forkInjector();
 
       if (newHostAddress != null) {

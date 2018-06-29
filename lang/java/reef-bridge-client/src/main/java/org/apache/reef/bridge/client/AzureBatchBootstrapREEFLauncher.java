@@ -26,11 +26,7 @@ import org.apache.reef.reef.bridge.client.avro.AvroAzureBatchJobSubmissionParame
 import org.apache.reef.runtime.azbatch.AzureBatchClasspathProvider;
 import org.apache.reef.runtime.azbatch.AzureBatchJVMPathProvider;
 import org.apache.reef.runtime.azbatch.client.AzureBatchDriverConfigurationProviderImpl;
-import org.apache.reef.runtime.azbatch.parameters.AzureBatchAccountName;
-import org.apache.reef.runtime.azbatch.parameters.AzureBatchAccountUri;
-import org.apache.reef.runtime.azbatch.parameters.AzureBatchPoolId;
-import org.apache.reef.runtime.azbatch.parameters.AzureStorageAccountName;
-import org.apache.reef.runtime.azbatch.parameters.AzureStorageContainerName;
+import org.apache.reef.runtime.azbatch.parameters.*;
 import org.apache.reef.runtime.azbatch.util.command.CommandBuilder;
 import org.apache.reef.runtime.azbatch.util.command.WindowsCommandBuilder;
 import org.apache.reef.runtime.common.REEFEnvironment;
@@ -42,18 +38,17 @@ import org.apache.reef.runtime.common.launch.REEFErrorHandler;
 import org.apache.reef.runtime.common.launch.REEFMessageCodec;
 import org.apache.reef.tang.*;
 import org.apache.reef.tang.exceptions.InjectionException;
+import org.apache.reef.util.logging.Config;
 import org.apache.reef.wake.remote.RemoteConfiguration;
-import org.apache.reef.wake.remote.ports.ListTcpPortProvider;
-import org.apache.reef.wake.remote.ports.TcpPortProvider;
+import org.apache.reef.wake.remote.address.ContainerBasedLocalAddressProvider;
+import org.apache.reef.wake.remote.address.LocalAddressProvider;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
 import org.apache.reef.wake.time.Clock;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -95,20 +90,28 @@ public final class AzureBatchBootstrapREEFLauncher {
         TANG.newInjector(generateConfiguration(jobSubmissionParameters))
             .getInstance(AzureBatchBootstrapDriverConfigGenerator.class);
 
+    LocalAddressProvider defaultLocalAddressProvider =
+        Tang.Factory.getTang().newInjector().getInstance(LocalAddressProvider.class);
+    LOG.log(Level.INFO, "defaultLocalAddressProvider:" + defaultLocalAddressProvider);
+
     final JavaConfigurationBuilder launcherConfigBuilder =
         TANG.newConfigurationBuilder()
             .bindNamedParameter(RemoteConfiguration.ManagerName.class, "AzureBatchBootstrapREEFLauncher")
             .bindNamedParameter(RemoteConfiguration.ErrorHandler.class, REEFErrorHandler.class)
             .bindNamedParameter(RemoteConfiguration.MessageCodec.class, REEFMessageCodec.class)
+            .bindNamedParameter(RemoteConfiguration.HostAddress.class, defaultLocalAddressProvider.getLocalAddress())
+            //.bindImplementation(LocalAddressProvider.class, ContainerBasedLocalAddressProvider.class)
             .bindSetEntry(Clock.RuntimeStartHandler.class, PIDStoreStartHandler.class);
+
 
     // Check if user has set up preferred ports to use.
     // If set, we prefer will launch driver that binds those ports.
-    final List<String> preferredPorts = asStringList(jobSubmissionParameters.getAzureBatchPoolDriverPortsList());
+    final Set<String> preferredPorts = asStringList(jobSubmissionParameters.getAzureBatchPoolDriverPortsList());
 
-    if (preferredPorts.size() > 0) {
-      launcherConfigBuilder.bindList(TcpPortList.class, preferredPorts)
-          .bindImplementation(TcpPortProvider.class, ListTcpPortProvider.class);
+    if (jobSubmissionParameters.getAzureBatchPoolDriverPortsList().size() > 0) {
+      for (CharSequence port : jobSubmissionParameters.getAzureBatchPoolDriverPortsList()) {
+        launcherConfigBuilder.bindSetEntry(TcpPortList.class, port.toString());
+      }
     }
 
     final Configuration launcherConfig = launcherConfigBuilder.build();
@@ -156,11 +159,19 @@ public final class AzureBatchBootstrapREEFLauncher {
             avroAzureBatchJobSubmissionParameters.getAzureStorageAccountName().toString())
         .bindNamedParameter(AzureStorageContainerName.class,
             avroAzureBatchJobSubmissionParameters.getAzureStorageContainerName().toString())
+        .bindNamedParameter(ContainerRegistryServer.class,
+            avroAzureBatchJobSubmissionParameters.getContainerRegistryServer().toString())
+        .bindNamedParameter(ContainerRegistryUsername.class,
+            avroAzureBatchJobSubmissionParameters.getContainerRegistryUsername().toString())
+        .bindNamedParameter(ContainerRegistryPassword.class,
+            avroAzureBatchJobSubmissionParameters.getContainerRegistryPassword().toString())
+        .bindNamedParameter(ContainerImageName.class,
+            avroAzureBatchJobSubmissionParameters.getContainerImageName().toString())
         .build();
   }
 
-  private static List<String> asStringList(final Collection<? extends CharSequence> list) {
-    final List<String> result = new ArrayList<>(list.size());
+  private static HashSet<String> asStringList(final Collection<? extends CharSequence> list) {
+    final HashSet<String> result = new HashSet<>(list.size());
     for (final CharSequence sequence : list) {
       result.add(sequence.toString());
     }

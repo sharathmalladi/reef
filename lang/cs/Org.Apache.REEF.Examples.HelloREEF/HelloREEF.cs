@@ -27,10 +27,13 @@ using Org.Apache.REEF.Client.YARN.HDI;
 using Org.Apache.REEF.Driver;
 using Org.Apache.REEF.IO.FileSystem.AzureBlob;
 using Org.Apache.REEF.Tang.Annotations;
+using Org.Apache.REEF.Tang.Implementations.Configuration;
 using Org.Apache.REEF.Tang.Implementations.Tang;
 using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Tang.Util;
 using Org.Apache.REEF.Utilities.Logging;
+using Org.Apache.REEF.Wake.Remote;
+using Org.Apache.REEF.Wake.Remote.Impl;
 
 namespace Org.Apache.REEF.Examples.HelloREEF
 {
@@ -117,18 +120,23 @@ namespace Org.Apache.REEF.Examples.HelloREEF
                         .Build();
                 case AzureBatch:
                     return AzureBatchRuntimeClientConfiguration.ConfigurationModule
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountKey, @"##########################################")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountName, @"######")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountUri, @"######################")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchPoolId, @"######")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageAccountKey, @"##########################################")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageAccountName, @"############")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageContainerName, @"###########")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountKey, @"4uzA/ZH39FIgqvRSs6Vootdti0i3G9cVDD0CDvqtNEnBWAM5QmkoEfsnbAfhdB6n1pYQkGBXJI5f3iFdXxLKww==")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountName, @"reefbatchwestus2")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountUri, @"https://reefbatchwestus2.westus2.batch.azure.com")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchPoolId, @"winpoolwithcontainers02")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageAccountKey, @"DTEs6LKAlLGNfkJcw68cKC3feSfhDdBulgiLSTUjciPR54guhd3Sge3IuS5N/pdM2plzmaSiVY446vgykHinhg==")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageAccountName, @"reefbatchwestus2storage")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageContainerName, @"reefcontainer")
                         //// Extend default retry interval in Azure Batch
-                        .Set(AzureBatchRuntimeClientConfiguration.DriverHTTPConnectionRetryInterval, "20000")
+                        //.Set(AzureBatchRuntimeClientConfiguration.DriverHTTPConnectionRetryInterval, "2000")
                         //// To allow Driver - Client communication, please specify the ports to use to set up driver http server.
                         //// These ports must be defined in Azure Batch InBoundNATPool.
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchPoolDriverPortsList, new List<string>(new string[] { "123", "456" }))
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchPoolDriverPortsList, new List<string>(new string[] { "2000", "2001", "2002", "2003", "2004" }))
+                        // Bind to Container Registry properties if present
+                        .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryServer, "sharathmcontainerreg.azurecr.io")
+                        .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryUsername, "sharathmcontainerreg")
+                        .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryPassword, "kALVT7bI=cFlOEgQtcRDX5vHXAj42GtC")
+                        .Set(AzureBatchRuntimeClientConfiguration.ContainerImageName, "sharathmcontainerreg.azurecr.io/windowswithjre")
                         .Build();
 
                 default:
@@ -138,7 +146,7 @@ namespace Org.Apache.REEF.Examples.HelloREEF
 
         public static void MainSimple(string[] args)
         {
-            var runtime = args.Length > 0 ? args[0] : Local;
+            var runtime = args.Length > 0 ? args[0] : AzureBatch;
 
             // Execute the HelloREEF, with these parameters injected
             TangFactory.GetTang()
