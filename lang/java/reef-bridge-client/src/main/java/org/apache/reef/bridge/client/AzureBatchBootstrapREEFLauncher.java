@@ -38,9 +38,7 @@ import org.apache.reef.runtime.common.launch.REEFErrorHandler;
 import org.apache.reef.runtime.common.launch.REEFMessageCodec;
 import org.apache.reef.tang.*;
 import org.apache.reef.tang.exceptions.InjectionException;
-import org.apache.reef.util.logging.Config;
 import org.apache.reef.wake.remote.RemoteConfiguration;
-import org.apache.reef.wake.remote.address.ContainerBasedLocalAddressProvider;
 import org.apache.reef.wake.remote.address.LocalAddressProvider;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
 import org.apache.reef.wake.time.Clock;
@@ -92,7 +90,6 @@ public final class AzureBatchBootstrapREEFLauncher {
 
     LocalAddressProvider defaultLocalAddressProvider =
         Tang.Factory.getTang().newInjector().getInstance(LocalAddressProvider.class);
-    LOG.log(Level.INFO, "defaultLocalAddressProvider:" + defaultLocalAddressProvider);
 
     final JavaConfigurationBuilder launcherConfigBuilder =
         TANG.newConfigurationBuilder()
@@ -100,7 +97,6 @@ public final class AzureBatchBootstrapREEFLauncher {
             .bindNamedParameter(RemoteConfiguration.ErrorHandler.class, REEFErrorHandler.class)
             .bindNamedParameter(RemoteConfiguration.MessageCodec.class, REEFMessageCodec.class)
             .bindNamedParameter(RemoteConfiguration.HostAddress.class, defaultLocalAddressProvider.getLocalAddress())
-            //.bindImplementation(LocalAddressProvider.class, ContainerBasedLocalAddressProvider.class)
             .bindSetEntry(Clock.RuntimeStartHandler.class, PIDStoreStartHandler.class);
 
 

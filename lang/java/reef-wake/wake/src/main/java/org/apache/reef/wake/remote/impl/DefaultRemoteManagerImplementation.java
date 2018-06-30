@@ -83,7 +83,6 @@ public final class DefaultRemoteManagerImplementation implements RemoteManager {
         final TransportFactory tpFactory,
         final TcpPortProvider tcpPortProvider) {
 
-    LOG.log(Level.INFO, "DefaultRemoteManagerImplementation injector: hostAddress is " + hostAddress);
     this.name = name;
     this.handlerContainer = new HandlerContainer<>(name, codec);
 

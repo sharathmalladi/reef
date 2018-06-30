@@ -32,8 +32,6 @@ import org.apache.reef.webserver.HttpHandlerConfiguration;
 import org.apache.reef.webserver.HttpServerReefEventHandler;
 import org.apache.reef.webserver.ReefEventStateManager;
 
-import java.io.IOException;
-
 /**
  * Distributed shell example based on REEF HTTP Server component.
  */

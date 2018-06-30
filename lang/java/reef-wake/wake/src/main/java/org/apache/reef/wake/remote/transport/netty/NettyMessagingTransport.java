@@ -126,9 +126,6 @@ public final class NettyMessagingTransport implements Transport {
 
     final String host = UNKNOWN_HOST_NAME.equals(hostAddress) ? localAddressProvider.getLocalAddress() : hostAddress;
 
-    LOG.log(Level.INFO, "NettyMessagingTransport:localAddressProvider is " + localAddressProvider.getClass().getName());
-    LOG.log(Level.INFO, "NettyMessagingTransport:localAddressProvider is " + localAddressProvider.getLocalAddress());
-    LOG.log(Level.INFO, "NettyMessagingTransport:hostAddress is " + hostAddress);
     this.numberOfTries = numberOfTries;
     this.retryTimeout = retryTimeout;
     this.clientEventListener = new NettyClientEventListener(this.addrToLinkRefMap, clientStage);

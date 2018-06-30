@@ -157,4 +157,3 @@ public final class AzureBatchJobSubmissionHandler implements JobSubmissionHandle
     return jobNameShort + "-" + uuid;
   }
 }
-

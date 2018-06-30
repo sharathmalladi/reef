@@ -148,7 +148,6 @@ public final class REEFImplementation implements REEF {
     final ConfigurationBuilder configurationBuilder = Tang.Factory.getTang()
         .newConfigurationBuilder(driverConfiguration);
     for (final ConfigurationProvider configurationProvider : this.configurationProviders) {
-      LOG.log(Level.INFO, "createDriverConfiguration:conf: " + configurationBuilder.getClass().getName());
       configurationBuilder.addConfiguration(configurationProvider.getConfiguration());
     }
     return configurationBuilder.build();

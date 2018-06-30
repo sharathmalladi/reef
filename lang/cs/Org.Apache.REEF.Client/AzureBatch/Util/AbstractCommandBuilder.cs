@@ -64,7 +64,7 @@ namespace Org.Apache.REEF.Client.AzureBatch.Util
         }
 
         public abstract string CaptureIpAddressCommandLine();
-		
+
         public abstract string GetIpAddressFilePath();
 
         /// <summary>

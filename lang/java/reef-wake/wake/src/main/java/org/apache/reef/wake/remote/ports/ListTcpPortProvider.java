@@ -42,16 +42,6 @@ public final class ListTcpPortProvider implements TcpPortProvider {
     LOG.log(Level.FINE, "Instantiating {0}", this);
   }
 
-/*  @Inject
-  public ListTcpPortProvider(@Parameter(TcpPortListString.class) final String tcpPortListSting) {
-    this.tcpPortList = new ArrayList<>();
-    for (String port: StringUtils.split(tcpPortListSting, ",")) {
-      this.tcpPortList.add(Integer.parseInt(port));
-    }
-    LOG.log(Level.INFO, "Instantiating " + this);
-  }
-*/
-
   /**
    * Returns an iterator over a set of tcp ports.
    *
