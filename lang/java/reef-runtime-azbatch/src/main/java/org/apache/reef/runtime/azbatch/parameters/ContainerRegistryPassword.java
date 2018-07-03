@@ -16,21 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.wake.remote.ports.parameters;
+package org.apache.reef.runtime.azbatch.parameters;
 
 import org.apache.reef.tang.annotations.Name;
 import org.apache.reef.tang.annotations.NamedParameter;
-import java.util.Set;
+
+// TODO[JIRA REEF-TBD]: Secure the password by encrypting it and using
+// Azure Batch certificates to decrypt on the driver side.
 
 /**
- * An list of tcp port numbers to try.
+ * The container registry password.
  */
-@NamedParameter(doc = "An list of tcp port numbers to try")
-public final class TcpPortList implements Name<Set<Integer>> {
-
-  /**
-   * Empty private constructor to prohibit instantiation of utility class.
-   */
-  private TcpPortList() {
-  }
+@NamedParameter(doc = "The container registry password.", default_value = "")
+public final class ContainerRegistryPassword implements Name<String> {
 }

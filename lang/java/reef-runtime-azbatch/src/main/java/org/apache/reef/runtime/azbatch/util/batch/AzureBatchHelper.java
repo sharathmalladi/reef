@@ -21,17 +21,20 @@ package org.apache.reef.runtime.azbatch.util.batch;
 import com.microsoft.azure.batch.BatchClient;
 import com.microsoft.azure.batch.protocol.models.*;
 
-import org.apache.reef.runtime.azbatch.client.AzureBatchJobSubmissionHandler;
-import org.apache.reef.runtime.azbatch.parameters.AzureBatchPoolId;
+import org.apache.reef.runtime.azbatch.parameters.*;
 import org.apache.reef.runtime.azbatch.util.AzureBatchFileNames;
+import org.apache.reef.runtime.azbatch.util.command.CommandBuilder;
 import org.apache.reef.runtime.azbatch.util.storage.SharedAccessSignatureCloudBlobClientProvider;
 import org.apache.reef.tang.annotations.Parameter;
+import org.apache.reef.wake.remote.address.ContainerBasedLocalAddressProvider;
+import org.apache.reef.wake.remote.ports.TcpPortProvider;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,7 +44,7 @@ import java.util.logging.Logger;
  */
 public final class AzureBatchHelper {
 
-  private static final Logger LOG = Logger.getLogger(AzureBatchJobSubmissionHandler.class.getName());
+  private static final Logger LOG = Logger.getLogger(AzureBatchHelper.class.getName());
 
   /*
    * Environment variable that contains the Azure Batch jobId.
@@ -52,16 +55,27 @@ public final class AzureBatchHelper {
 
   private final BatchClient client;
   private final PoolInformation poolInfo;
+  private CommandBuilder commandBuilder;
+  private final TcpPortProvider portProvider;
+  private final ContainerRegistryProvider containerRegistryProvider;
+  private final boolean areContainersEnabled;
 
   @Inject
   public AzureBatchHelper(
       final AzureBatchFileNames azureBatchFileNames,
       final IAzureBatchCredentialProvider credentialProvider,
+      final TcpPortProvider portProvider,
+      final CommandBuilder commandBuilder,
+      final ContainerRegistryProvider containerRegistryProvider,
       @Parameter(AzureBatchPoolId.class) final String azureBatchPoolId) {
     this.azureBatchFileNames = azureBatchFileNames;
 
     this.client = BatchClient.open(credentialProvider.getCredentials());
     this.poolInfo = new PoolInformation().withPoolId(azureBatchPoolId);
+    this.commandBuilder = commandBuilder;
+    this.containerRegistryProvider = containerRegistryProvider;
+    this.portProvider = portProvider;
+    this.areContainersEnabled = this.containerRegistryProvider.isValid();
   }
 
   /**
@@ -96,6 +110,8 @@ public final class AzureBatchHelper {
         .withResourceFiles(Collections.singletonList(jarResourceFile))
         .withEnvironmentSettings(Collections.singletonList(environmentSetting))
         .withAuthenticationTokenSettings(authenticationTokenSettings)
+        .withKillJobOnCompletion(true)
+        .withContainerSettings(createTaskContainerSettings())
         .withCommandLine(command);
 
     LOG.log(Level.INFO, "Job Manager (aka driver) task command: " + command);
@@ -103,6 +119,7 @@ public final class AzureBatchHelper {
     JobAddParameter jobAddParameter = new JobAddParameter()
         .withId(applicationId)
         .withJobManagerTask(jobManagerTask)
+        .withJobPreparationTask(createJobPreparationTask())
         .withPoolInfo(poolInfo);
 
     client.jobOperations().createJob(jobAddParameter);
@@ -139,7 +156,10 @@ public final class AzureBatchHelper {
     final TaskAddParameter taskAddParameter = new TaskAddParameter()
         .withId(taskId)
         .withResourceFiles(resources)
-        .withCommandLine(command);
+        .withContainerSettings(createTaskContainerSettings())
+        .withCommandLine(command)
+        .withUserIdentity(
+            new UserIdentity().withAutoUser(new AutoUserSpecification().withElevationLevel(ElevationLevel.ADMIN)));
 
     this.client.taskOperations().createTask(jobId, taskAddParameter);
   }
@@ -168,5 +188,39 @@ public final class AzureBatchHelper {
    */
   public String getAzureBatchJobId() {
     return System.getenv(AZ_BATCH_JOB_ID_ENV);
+  }
+
+  private TaskContainerSettings createTaskContainerSettings() {
+    if (!this.areContainersEnabled) {
+      return null;
+    }
+
+    StringBuilder portMappings = new StringBuilder();
+    Iterator<Integer> iterator = this.portProvider.iterator();
+    while (iterator.hasNext()) {
+      Integer port = iterator.next();
+      portMappings.append(String.format("-p %d:%d ", port, port));
+    }
+
+    return new TaskContainerSettings()
+        .withRegistry(this.containerRegistryProvider.getContainerRegistry())
+        .withImageName(this.containerRegistryProvider.getContainerImageName())
+        .withContainerRunOptions(
+            String.format(
+                "-dit --env %s=%s %s",
+                ContainerBasedLocalAddressProvider.HOST_IP_ADDR_PATH_ENV,
+                this.commandBuilder.getIpAddressFilePath(),
+                portMappings));
+  }
+
+  private JobPreparationTask createJobPreparationTask() {
+    if (!this.areContainersEnabled) {
+      return null;
+    }
+
+    String captureIpAddressCommandLine = this.commandBuilder.captureIpAddressCommandLine();
+    return new JobPreparationTask()
+        .withId("CaptureHostIpAddress")
+        .withCommandLine(captureIpAddressCommandLine);
   }
 }

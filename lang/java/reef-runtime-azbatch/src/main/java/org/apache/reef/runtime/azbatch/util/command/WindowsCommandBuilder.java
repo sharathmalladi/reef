@@ -31,6 +31,8 @@ import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Build the launch command for Java REEF processes for Azure Batch Windows pools.
@@ -40,6 +42,7 @@ public class WindowsCommandBuilder extends AbstractCommandBuilder {
 
   private static final Class LAUNCHER_CLASS = REEFLauncher.class;
   private static final Class SHIM_LAUNCHER_CLASS = EvaluatorShimLauncher.class;
+  private static final Logger LOG = Logger.getLogger(WindowsCommandBuilder.class.getName());
   private static final List<String> COMMAND_LIST_PREFIX = Collections.unmodifiableList(
       Arrays.asList(
           "Add-Type -AssemblyName System.IO.Compression.FileSystem; ",
@@ -70,5 +73,18 @@ public class WindowsCommandBuilder extends AbstractCommandBuilder {
   protected String getEvaluatorShimClasspath() {
     return String.format("'%s'", StringUtils.join(
         super.classpathProvider.getEvaluatorClasspath(), CLASSPATH_SEPARATOR_CHAR));
+  }
+
+  @Override
+  public String getIpAddressFilePath() {
+    return "%AZ_BATCH_JOB_PREP_WORKING_DIR%\\hostip.txt";
+  }
+
+  @Override
+  public String captureIpAddressCommandLine() {
+    LOG.log(Level.INFO, "Inside java code for WindowsCommandBuilder");
+    return String.format("powershell /c \"Set-Content -Path %s -Value "
+        + "((Test-Connection -ComputerName $Env:ComputerName -Count 1).IPV4Address.IPAddressToString) "
+        + " -NoNewline -Force\"", getIpAddressFilePath());
   }
 }

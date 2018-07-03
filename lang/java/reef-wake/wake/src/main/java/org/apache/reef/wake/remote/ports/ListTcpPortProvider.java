@@ -18,27 +18,26 @@
  */
 package org.apache.reef.wake.remote.ports;
 
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.reef.tang.annotations.Parameter;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortList;
 
 import javax.inject.Inject;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A TcpPortProvider which gives out random ports in a range.
+ * A TcpPortProvider which gives out ports in a range.
  */
 public final class ListTcpPortProvider implements TcpPortProvider {
 
   private static final Logger LOG = Logger.getLogger(ListTcpPortProvider.class.getName());
-  private final List<Integer> tcpPortList;
+  private final Set<Integer> tcpPortList;
 
   @Inject
-  public ListTcpPortProvider(@Parameter(TcpPortList.class) final List<Integer> tcpPortList) {
+  public ListTcpPortProvider(@Parameter(TcpPortList.class) final Set<Integer> tcpPortList) {
     this.tcpPortList = tcpPortList;
     LOG.log(Level.FINE, "Instantiating {0}", this);
   }
