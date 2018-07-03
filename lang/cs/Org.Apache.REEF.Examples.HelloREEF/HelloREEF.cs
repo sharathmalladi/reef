@@ -121,23 +121,23 @@ namespace Org.Apache.REEF.Examples.HelloREEF
                 case AzureBatch:
                     List<string> ports = new List<string> { "2000", "2001", "2002", "2003", "2004" };
                     return AzureBatchRuntimeClientConfiguration.GetConfigurationModule(ports)
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountKey, @"4uzA/ZH39FIgqvRSs6Vootdti0i3G9cVDD0CDvqtNEnBWAM5QmkoEfsnbAfhdB6n1pYQkGBXJI5f3iFdXxLKww==")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountName, @"reefbatchwestus2")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountUri, @"https://reefbatchwestus2.westus2.batch.azure.com")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchPoolId, @"winpoolwithcontainers02")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageAccountKey, @"DTEs6LKAlLGNfkJcw68cKC3feSfhDdBulgiLSTUjciPR54guhd3Sge3IuS5N/pdM2plzmaSiVY446vgykHinhg==")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageAccountName, @"reefbatchwestus2storage")
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageContainerName, @"reefcontainer")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountKey, @"##########################################")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountName, @"######")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountUri, @"######################")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchPoolId, @"######")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageAccountKey, @"##########################################")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageAccountName, @"############")
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureStorageContainerName, @"###########")
                         //// Extend default retry interval in Azure Batch
-                        //.Set(AzureBatchRuntimeClientConfiguration.DriverHTTPConnectionRetryInterval, "2000")
+                        .Set(AzureBatchRuntimeClientConfiguration.DriverHTTPConnectionRetryInterval, "2000")
                         //// To allow Driver - Client communication, please specify the ports to use to set up driver http server.
                         //// These ports must be defined in Azure Batch InBoundNATPool.
                         .Set(AzureBatchRuntimeClientConfiguration.AzureBatchPoolDriverPortsList, new List<string>(ports))
                         // Bind to Container Registry properties if present
-                        .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryServer, "sharathmcontainerreg.azurecr.io")
-                        .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryUsername, "sharathmcontainerreg")
-                        .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryPassword, "kALVT7bI=cFlOEgQtcRDX5vHXAj42GtC")
-                        .Set(AzureBatchRuntimeClientConfiguration.ContainerImageName, "sharathmcontainerreg.azurecr.io/windowswithjre")
+                        .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryServer, @"###############")
+                        .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryUsername, @"###############")
+                        .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryPassword, @"###############")
+                        .Set(AzureBatchRuntimeClientConfiguration.ContainerImageName, @"###############")
                         .Build();
 
                 default:
