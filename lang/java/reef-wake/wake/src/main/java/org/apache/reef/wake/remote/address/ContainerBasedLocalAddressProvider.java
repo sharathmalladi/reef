@@ -21,8 +21,6 @@ package org.apache.reef.wake.remote.address;
 import org.apache.commons.lang.StringUtils;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.Tang;
-import org.apache.reef.tang.exceptions.InjectionException;
-import org.apache.reef.wake.remote.RemoteConfiguration;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -85,16 +83,9 @@ public final class ContainerBasedLocalAddressProvider implements LocalAddressPro
 
   @Override
   public Configuration getConfiguration() {
-    try {
-      LocalAddressProvider defaultLocalAddressProvider =
-          Tang.Factory.getTang().newInjector().getInstance(LocalAddressProvider.class);
       return Tang.Factory.getTang().newConfigurationBuilder()
           .bind(LocalAddressProvider.class, ContainerBasedLocalAddressProvider.class)
-          .bindNamedParameter(RemoteConfiguration.HostAddress.class, defaultLocalAddressProvider.getLocalAddress())
           .build();
-    } catch (InjectionException ex) {
-      throw new RuntimeException("Unable to inject LocalAddressProvider identifier from default context", ex);
-    }
   }
 
   @Override

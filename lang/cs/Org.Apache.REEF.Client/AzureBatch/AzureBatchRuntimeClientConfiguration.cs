@@ -73,15 +73,23 @@ namespace Org.Apache.REEF.Client.AzureBatch
             .BindNamedParameter(GenericType<ContainerRegistryUsername>.Class, ContainerRegistryUsername)
             .BindNamedParameter(GenericType<ContainerRegistryPassword>.Class, ContainerRegistryPassword)
             .BindNamedParameter(GenericType<ContainerImageName>.Class, ContainerImageName)
-            .BindSetEntry<TcpPortList, int>(GenericType<TcpPortList>.Class, "2000")
-            .BindSetEntry<TcpPortList, int>(GenericType<TcpPortList>.Class, "2001")
-            .BindSetEntry<TcpPortList, int>(GenericType<TcpPortList>.Class, "2002")
-            .BindSetEntry<TcpPortList, int>(GenericType<TcpPortList>.Class, "2003")
             .Build();
 
         public static IConfiguration FromTextFile(string file)
         {
             return new AvroConfigurationSerializer().FromFile(file);
+        }
+
+        public static ConfigurationModule GetConfigurationModule(List<string> ports)
+        {
+            ConfigurationModuleBuilder moduleBuilder = AzureBatchRuntimeClientConfiguration.ConfigurationModule.Builder;
+
+            foreach (string port in ports)
+            {
+                moduleBuilder = moduleBuilder.BindSetEntry<TcpPortList, int>(GenericType<TcpPortList>.Class, port);
+            }
+
+            return moduleBuilder.Build();
         }
 
         public static IConfiguration FromEnvironment()

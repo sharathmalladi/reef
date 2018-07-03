@@ -119,7 +119,8 @@ namespace Org.Apache.REEF.Examples.HelloREEF
                         .Set(AzureBlockBlobFileSystemConfiguration.ConnectionString, connectionString)
                         .Build();
                 case AzureBatch:
-                    return AzureBatchRuntimeClientConfiguration.ConfigurationModule
+                    List<string> ports = new List<string> { "2000", "2001", "2002", "2003", "2004" };
+                    return AzureBatchRuntimeClientConfiguration.GetConfigurationModule(ports)
                         .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountKey, @"4uzA/ZH39FIgqvRSs6Vootdti0i3G9cVDD0CDvqtNEnBWAM5QmkoEfsnbAfhdB6n1pYQkGBXJI5f3iFdXxLKww==")
                         .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountName, @"reefbatchwestus2")
                         .Set(AzureBatchRuntimeClientConfiguration.AzureBatchAccountUri, @"https://reefbatchwestus2.westus2.batch.azure.com")
@@ -131,7 +132,7 @@ namespace Org.Apache.REEF.Examples.HelloREEF
                         //.Set(AzureBatchRuntimeClientConfiguration.DriverHTTPConnectionRetryInterval, "2000")
                         //// To allow Driver - Client communication, please specify the ports to use to set up driver http server.
                         //// These ports must be defined in Azure Batch InBoundNATPool.
-                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchPoolDriverPortsList, new List<string>(new string[] { "2000", "2001", "2002", "2003", "2004" }))
+                        .Set(AzureBatchRuntimeClientConfiguration.AzureBatchPoolDriverPortsList, new List<string>(ports))
                         // Bind to Container Registry properties if present
                         .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryServer, "sharathmcontainerreg.azurecr.io")
                         .Set(AzureBatchRuntimeClientConfiguration.ContainerRegistryUsername, "sharathmcontainerreg")
