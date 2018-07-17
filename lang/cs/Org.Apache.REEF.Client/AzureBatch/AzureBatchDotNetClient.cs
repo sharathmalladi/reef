@@ -27,7 +27,6 @@ using Org.Apache.REEF.Common.Files;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Utilities.Logging;
-using Org.Apache.REEF.Client.AzureBatch.Parameters;
 using Org.Apache.REEF.Client.API.Parameters;
 
 namespace Org.Apache.REEF.Client.DotNet.AzureBatch

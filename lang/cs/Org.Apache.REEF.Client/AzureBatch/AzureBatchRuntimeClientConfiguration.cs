@@ -49,6 +49,11 @@ namespace Org.Apache.REEF.Client.AzureBatch
 
         public static readonly OptionalParameter<IList<string>> AzureBatchPoolDriverPortsList = new OptionalParameter<IList<string>>();
 
+        public static readonly OptionalParameter<string> ContainerRegistryServer = new OptionalParameter<string>();
+        public static readonly OptionalParameter<string> ContainerRegistryUsername = new OptionalParameter<string>();
+        public static readonly OptionalParameter<string> ContainerRegistryPassword = new OptionalParameter<string>();
+        public static readonly OptionalParameter<string> ContainerImageName = new OptionalParameter<string>();
+
         public static ConfigurationModule ConfigurationModule = new AzureBatchRuntimeClientConfiguration()
             .BindImplementation(GenericType<IREEFClient>.Class, GenericType<AzureBatchDotNetClient>.Class)
             .BindNamedParameter(GenericType<AzureBatchAccountUri>.Class, AzureBatchAccountUri)
@@ -61,6 +66,10 @@ namespace Org.Apache.REEF.Client.AzureBatch
             .BindNamedParameter(GenericType<DriverHTTPConnectionRetryInterval>.Class, DriverHTTPConnectionRetryInterval)
             .BindNamedParameter(GenericType<DriverHTTPConnectionAttempts>.Class, DriverHTTPConnectionAttempts)
             .BindNamedParameter(GenericType<AzureBatchPoolDriverPortsList>.Class, AzureBatchPoolDriverPortsList)
+            .BindNamedParameter(GenericType<ContainerRegistryServer>.Class, ContainerRegistryServer)
+            .BindNamedParameter(GenericType<ContainerRegistryUsername>.Class, ContainerRegistryUsername)
+            .BindNamedParameter(GenericType<ContainerRegistryPassword>.Class, ContainerRegistryPassword)
+            .BindNamedParameter(GenericType<ContainerImageName>.Class, ContainerImageName)
             .Build();
 
         public static IConfiguration FromTextFile(string file)
