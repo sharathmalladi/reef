@@ -1,7 +1,7 @@
 ﻿## Azure Batch with Docker containers
 Azure Batch has the functionality to run jobs and tasks within a Docker container. Using Docker containers to execute REEF jobs has the benefit of isolating the runtime dependencies in light-weight Docker containers instead of the vm node. This section describes how you can configure the pool and REEF to execute REEF jobs inside Docker containers.
 
-####	1. Create Dockerfile for your OS with REEF and other dependencies 
+#### 1. Create Dockerfile for your OS with REEF and other dependencies 
 The Docker container must be configured to execute REEF jobs since the jobs will execute within the Docker container environment. You can add additional dependencies as you see fit. Following are the dockerfiles listing dependencies required for REEF for Windows and Linux based containers.
 
 ##### Option: Windows Docker image
@@ -37,8 +37,8 @@ ENV JAVA_HOME /usr/bin/java
 
 #### 3. Create a Pool in the Azure Batch account for [Container workloads](https://docs.microsoft.com/en-us/azure/batch/batch-docker-container-workloads)  
 Use the following settings when creating the pool:  
-*	Set the Max tasks per node to be one (more on this [below](#Limitations)).  
-*	Enable Inter-node communication option.
+*    Set the Max tasks per node to be one (more on this [below](#Limitations)).  
+*    Enable Inter-node communication option.
 *   If REEF client-driver communication is necessary, you will also need to [configure the pool](TBD: Link to "How to configure REEF .NET Driver Client communication on Azure Batch" from the wiki page) to use these same set of ports.
 
 #### 4. Configure REEF to use the Docker containers on the pool
@@ -57,6 +57,6 @@ return AzureBatchRuntimeClientConfiguration.ConfigurationModule
 
 #### Limitations
 
-Containers must limited to a single docker container per node at a time. This is done by setting the number of **Max Tasks per Node** to be one when you create the Azure batch pool for containers. Following is a brief explanation about this limitation:  
+Containers must be limited to a single docker container per node at a time. This is done by setting the number of **Max Tasks per Node** to be one when you create the Azure batch pool for containers. Following is a brief explanation about this limitation:  
  
  For a service to communicate to clients external to the container, it must be executing on ports that are [explicitly mapped to ports](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) at the host level. The port mapping can only be set when creating the Docker container. Since we do not have knowledge of the ports available to us from Azure Batch, we are limited to executing only one container at a time with a predefined port list to ensure that it will start successfully.
